@@ -1,8 +1,6 @@
 # Control de Acceso — FCX (ZKTeco)
 
-Sistema web Django para gestionar registros de asistencia del dispositivo
-**FCX** (ZMM220_TFT). Sincroniza automáticamente vía PULL (pyzk/TCP 4370),
-muestra entrada/salida por empleado por día y ofrece dashboard en tiempo real.
+Sistema web Django para gestionar registros de asistencia del dispositivo **FCX** (ZMM220_TFT). Sincroniza automáticamente vía PULL (pyzk/TCP 4370), muestra entrada/salida por empleado por día y ofrece panel en tiempo real.
 
 ---
 
@@ -11,42 +9,50 @@ muestra entrada/salida por empleado por día y ofrece dashboard en tiempo real.
 ```
 acceso_scanner/
 ├── apps/
-│   ├── attendance/           # App de asistencia
-│   │   ├── management/
-│   │   │   └── commands/
-│   │   │       └── sync_device.py   # Comando: python manage.py sync_device
-│   │   ├── migrations/               # Migraciones de la BD
-│   │   ├── models.py                 # ScanRecord (huella individual)
-│   │   ├── pull.py                   # Sincronización PULL con pyzk
-│   │   ├── push.py                   # Stubs PUSH (ZKTeco HTTP)
-│   │   ├── services.py               # Lógica: reportes, matching, .DAT
-│   │   ├── urls.py                   # Rutas de la app
-│   │   └── views.py                  # Dashboard, APIs, detalle empleado
-│   ├── employees/             # App de empleados
-│   │   ├── management/
+│   ├── asistencia/               # App de asistencia
+│   │   ├── management/commands/
+│   │   │   └── sincronizar_dispositivo.py
 │   │   ├── migrations/
-│   │   │   └── 0002_load_employees.py  # 27 empleados iniciales
-│   │   └── models.py                 # Employee (raw_id, name)
+│   │   │   └── 0001_inicial.py
+│   │   ├── models.py             # RegistroAcceso
+│   │   ├── extraccion.py         # Sincronización PULL con pyzk
+│   │   ├── recepcion.py          # Stubs PUSH (ZKTeco HTTP)
+│   │   ├── servicios.py          # Lógica: reportes, matching, .DAT
+│   │   ├── urls.py               # Rutas de la app
+│   │   └── vistas/               # Panel, API, páginas
+│   │       ├── api.py
+│   │       ├── panel.py
+│   │       └── paginas.py
+│   ├── empleados/                # App de empleados
+│   │   ├── migrations/
+│   │   │   ├── 0001_inicial.py
+│   │   │   └── 0002_cargar_empleados.py  # 27 empleados iniciales
+│   │   └── models.py             # Empleado (id_original, nombre)
 │   └── __init__.py
-├── config/                    # Configuración Django
-│   ├── settings.py            # MySQL, Timezone, STATICFILES_DIRS
-│   ├── urls.py                # Rutas raíz
-│   └── wsgi.py                # WSGI para producción
-├── frontend/                  # Frontend (separado de Django)
-│   ├── static/
-│   │   ├── css/style.css      # Estilos personalizados (drop-zone, pulse, fade-in)
-│   │   └── js/main.js         # Lógica del dashboard (polling, upload, animaciones)
-│   └── templates/
-│       ├── attendance/
-│       │   ├── dashboard.html           # Dashboard principal
-│       │   └── employee_detail.html     # Detalle por empleado
-│       └── base.html                    # Layout base (Bootstrap 5 dark)
-├── scripts/                   # Scripts de despliegue
-│   ├── install_schedule.bat   # Instalar tarea programada (cada 1 min)
-│   ├── install_schedule.ps1   # Versión PowerShell con WorkingDirectory
-│   └── sync_device.bat        # Script que corre la sincronización
-├── manage.py                  # Punto de entrada Django
-└── requirements.txt           # Dependencias
+├── configuracion/                # Configuración Django
+│   ├── ajustes.py                # MySQL, Timezone, dispositivo, STATICFILES_DIRS
+│   ├── urls.py                   # Rutas raíz
+│   └── wsgi.py                   # WSGI para producción
+├── frontend/
+│   ├── estatico/
+│   │   ├── css/estilos.css       # Estilos (drop-zone, pulse, fade-in)
+│   │   └── js/principal.js       # Lógica del panel (polling, upload)
+│   └── plantillas/
+│       ├── asistencia/
+│       │   ├── panel.html        # Panel principal
+│       │   ├── detalle_empleado.html
+│       │   └── historial.html
+│       └── base.html             # Layout base (Bootstrap 5 dark)
+├── scripts/
+│   ├── sincronizar_dispositivo.bat
+│   ├── iniciar_servidor.ps1
+│   ├── instalar_programacion.bat
+│   └── instalar_programacion.ps1
+├── registros/                    # Logs rotativos
+├── manage.py
+├── requisitos.txt
+├── .env.ejemplo
+└── backup_datos.json
 ```
 
 ---
@@ -63,7 +69,7 @@ acceso_scanner/
 
 ```bash
 cd acceso_scanner
-pip install -r requirements.txt
+pip install -r requisitos.txt
 ```
 
 ### 2. Crear base de datos MySQL
@@ -72,14 +78,14 @@ pip install -r requirements.txt
 CREATE DATABASE acceso_scanner CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
-Las credenciales en `config/settings.py`:
+Las credenciales se configuran vía variables de entorno (ver `.env.ejemplo`):
 
-| Campo     | Valor       |
-|-----------|-------------|
-| Usuario   | root        |
-| Password  | G@RR0M     |
-| Host      | 127.0.0.1  |
-| Puerto    | 3306       |
+| Variable     | Por defecto  |
+|-------------|--------------|
+| `DB_USUARIO` | root         |
+| `DB_CLAVE`   | G@RR0M      |
+| `DB_HOST`    | 127.0.0.1    |
+| `DB_PUERTO`  | 3306         |
 
 ### 3. Migrar base de datos
 
@@ -87,7 +93,7 @@ Las credenciales en `config/settings.py`:
 python manage.py migrate
 ```
 
-Esto crea las tablas y carga los **27 empleados** iniciales (data migration).
+Esto crea las tablas y carga los **27 empleados** iniciales.
 
 ### 4. Verificar
 
@@ -105,12 +111,12 @@ python manage.py check
 python manage.py runserver
 ```
 
-Abrir **http://localhost:8000/** en el navegador.
+Abrir **http://localhost:8000/**.
 
 ### Sincronización manual con el FCX
 
 ```bash
-python manage.py sync_device
+python manage.py sincronizar_dispositivo
 ```
 
 Conecta al dispositivo `10.10.0.3:4370`, descarga:
@@ -122,10 +128,10 @@ Conecta al dispositivo `10.10.0.3:4370`, descarga:
 Abrir PowerShell como **Administrador** y ejecutar:
 
 ```powershell
-& "C:\Users\Jonathan Perez\acceso_scanner\scripts\install_schedule.bat"
+& "C:\Users\Jonathan Perez\acceso_scanner\scripts\instalar_programacion.bat"
 ```
 
-Esto instala la tarea programada `SyncFCX` que corre cada minuto en segundo plano.
+Esto instala la tarea programada `SyncFCX` que corre cada minuto.
 
 Para verificar:
 ```cmd
@@ -134,7 +140,7 @@ schtasks /query /tn SyncFCX
 
 ### Subir archivo .DAT manual
 
-En el dashboard, arrastra un archivo .DAT (formato tab-separado: `AER0000142\t2024-08-26 07:16:30`) o haz clic para seleccionarlo. El sistema procesa, empareja empleados y muestra el reporte.
+En el panel, arrastra un archivo .DAT (formato tab-separado: `AER0000142\t2024-08-26 07:16:30`) o haz clic para seleccionarlo. El sistema procesa, empareja empleados y muestra el reporte.
 
 ---
 
@@ -142,54 +148,46 @@ En el dashboard, arrastra un archivo .DAT (formato tab-separado: `AER0000142\t20
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/` | Dashboard HTML |
-| GET | `/employee/<pk>/` | Detalle HTML de un empleado |
-| GET | `/api/report/?date=YYYY-MM-DD` | Reporte diario (JSON) |
-| GET | `/api/recent-scans/` | Últimos 20 registros (JSON) |
-| GET | `/api/sync-status/` | Estado del dispositivo (JSON) |
-| GET | `/api/employees/` | Lista de empleados (JSON) |
-| GET | `/api/employee/<pk>/detail/?from=YYYY-MM-DD&to=YYYY-MM-DD` | Detalle de empleado por rango (JSON) |
-| POST | `/upload/` | Subir archivo .DAT (multipart) |
+| GET | `/` | Panel HTML |
+| GET | `/empleado/<pk>/` | Detalle HTML de un empleado |
+| GET | `/historial/` | Historial HTML |
+| GET | `/api/reporte/?fecha=YYYY-MM-DD` | Reporte diario (JSON) |
+| GET | `/api/registros-recientes/` | Últimos 20 registros (JSON) |
+| GET | `/api/estado-sincronizacion/` | Estado del dispositivo (JSON) |
+| GET | `/api/empleados/` | Lista de empleados (JSON) |
+| GET | `/api/empleado/<pk>/detalle/?desde=YYYY-MM-DD&hasta=YYYY-MM-DD` | Detalle por rango (JSON) |
+| GET | `/api/fechas-disponibles/` | Fechas con registros |
+| GET | `/api/registros-por-fecha/?fecha=YYYY-MM-DD` | Registros por fecha |
+| GET | `/api/sincronizar-dispositivo/` | Sincronización manual vía API |
+| POST | `/subir/` | Subir archivo .DAT (multipart) |
+| POST | `/iclock/cdata` | PUSH ZKTeco |
+| GET | `/iclock/getrequest` | PUSH ZKTeco |
 
 ### Ejemplo: detalle por empleado
 
 ```
-GET /api/employee/5/detail/?from=2026-06-01&to=2026-06-10
+GET /api/empleado/5/detalle/?desde=2026-06-01&hasta=2026-06-10
 ```
 
 ```json
 {
-  "employee": { "id": 5, "display_id": "AER149", "name": "FELIPE DE JESUS TAPIA GARCIA" },
-  "date_from": "2026-06-01",
-  "date_to": "2026-06-10",
-  "days": [
-    { "date": "2026-06-10", "first_scan": "07:02:00", "last_scan": "17:30:00", "hours": 10.47 }
+  "empleado": { "id": 5, "id_visual": "AER149", "nombre": "FELIPE DE JESUS TAPIA GARCIA" },
+  "fecha_desde": "2026-06-01",
+  "fecha_hasta": "2026-06-10",
+  "dias": [
+    { "fecha": "2026-06-10", "entrada": "07:02:00", "salida": "17:30:00", "horas": 10.47 }
   ],
-  "summary": { "total_days": 1, "total_hours": 10.47, "avg_hours": 10.47 }
+  "resumen": { "total_dias": 1, "total_horas": 10.47, "promedio_horas": 10.47 }
 }
 ```
 
 ---
 
-## Dashboard en vivo
+## Panel en vivo
 
-- **Polling**: cada 5 segundos consulta `/api/recent-scans/` y muestra nuevos registros con badge **NUEVO**
-- **Sincronización**: cada 1 minuto el `sync_device` trae datos del FCX
-- **Estadísticas**: empleados, registros hoy, total registros, estado del dispositivo
-
-### Filtros en detalle de empleado
-
-Cada nombre de empleado es clickable. La página de detalle ofrece:
-
-| Botón | Rango |
-|-------|-------|
-| Hoy | Hoy |
-| Ayer | Día anterior |
-| Esta semana | Lunes a domingo actual |
-| Semana pasada | Lunes a domingo anterior |
-| Este mes | 1° del mes a hoy |
-| Mes pasado | 1° al último día del mes anterior |
-| Personalizado | Cualquier rango con input type="date" |
+- **Polling**: cada 5s consulta `/api/registros-recientes/` y muestra nuevos registros con badge **NUEVO**
+- **Estadísticas**: cada 10s consulta `/api/estado-sincronizacion/`
+- **Sincronización**: cada 1 minuto el comando `sincronizar_dispositivo` trae datos del FCX
 
 ---
 
@@ -201,32 +199,43 @@ AccessPRO (app escritorio)
 FCX (ZMM220_TFT)
     │  IP: 10.10.0.3  ·  Puerto: 4370  ·  Serial: AEYU194660027
     │
-    ├── PULL → pyzk → SyncDevice (cada 1 min)
+    ├── PULL → pyzk → SincronizarDispositivo (cada 1 min)
     │        ↓
-    │   ScanRecord (MySQL)
+    │   RegistroAcceso (MySQL)
     │        ↓
-    │   Dashboard / API
+    │   Panel / API
     │
-    └── PUSH → /iclock/cdata   (stub, sin implementar)
+    └── PUSH → /iclock/cdata (implementado)
 ```
 
 ### Modelo de datos
 
 ```
-Employee              ScanRecord
-─────────             ─────────────────
-raw_id (PK)           id (PK)
-name                  employee → Employee (FK)
-                      scanned_at (datetime)
-                      raw_data (text)
-                      device_sn (varchar)
-                      created_at (datetime, auto)
+Empleado                         RegistroAcceso
+─────────                        ─────────────────
+id (PK)                          id (PK)
+id_original (unique)             empleado → Empleado (FK)
+nombre                           marcado_en (datetime)
+                                 datos_originales (text)
+                                 serial_dispositivo (varchar)
+                                 creado_en (datetime, auto)
 ```
 
-- Cada `ScanRecord` es **una huella individual** del dispositivo
-- El cálculo entrada/salida agrupa por `employee + date`, toma `min(scanned_at)` y `max(scanned_at)`
-- Los `display_id` se formatean como `AER###` (ej. `AER142`)
-- Los `raw_id` guardan el formato original (`AER0000142`)
+- Cada `RegistroAcceso` es **una huella individual** del dispositivo
+- El cálculo entrada/salida agrupa por `empleado + fecha`, toma `min(marcado_en)` y `max(marcado_en)`
+- Los `id_visual` se formatean como `AER###` (ej. `AER142`)
+
+---
+
+## Mejoras implementadas en esta reestructuración
+
+- ✅ **Código 100% en español**: variables, funciones, clases, constantes, API, URLs, templates, JS
+- ✅ **Configuración centralizada**: IP, puerto, clave y serial del dispositivo en `configuracion/ajustes.py`
+- ✅ **Variables de entorno**: secrets迁移 a `.env` (ver `.env.ejemplo`)
+- ✅ **Bugs corregidos**: `extra()` → `TruncDate`, `transaction.atomic()` en sincronización, `get_or_create` evita duplicados
+- ✅ **Código duplicado unificado**: `parsear_id` y `PATRON_ID` en un solo lugar (`servicios.py`)
+- ✅ **Nombres Django obligatorios preservados**: `migrations/`, `management/commands/`, `models.py`, `apps.py`, `admin.py`
+- ✅ **Scripts actualizados**: apuntan a `manage.py sincronizar_dispositivo`
 
 ---
 
@@ -234,52 +243,37 @@ name                  employee → Employee (FK)
 
 | Problema | Causa | Solución |
 |----------|-------|----------|
-| `sync_device` falla | Dispositivo no alcanzable | Verificar IP/firewall: `ping 10.10.0.3` |
-| La tarea SyncFCX no corre | Falta directorio de trabajo | Usar `install_schedule.ps1` con `-WorkingDirectory` |
-| Dashboard muestra "Sin registros" | No se ha sincronizado | `python manage.py sync_device` |
-| Empleado no aparece en reporte | No está en MySQL | Agregarlo en AccessPRO → sincronizar FCX → esperar SyncDevice |
-| Error MySQL `Can't connect` | MySQL no corriendo | `net start mysql` o iniciar servicio |
-
----
+| `sincronizar_dispositivo` falla | Dispositivo no alcanzable | `ping 10.10.0.3` |
+| Tarea SyncFCX no corre | Falta directorio | Usar `instalar_programacion.ps1` |
+| Panel "Sin registros" | No sincronizado | `python manage.py sincronizar_dispositivo` |
+| Error MySQL | MySQL no corriendo | `net start mysql` |
 
 ## Comandos útiles
 
 ```bash
-# Sincronizar ahora
-python manage.py sync_device
-
-# Solo empleados (sin asistencia)
-python manage.py sync_device --employees-only
-
-# En JSON (para scripting)
-python manage.py sync_device --json
-
-# Shell de Django
+python manage.py sincronizar_dispositivo
+python manage.py sincronizar_dispositivo --solo-empleados
+python manage.py sincronizar_dispositivo --json
 python manage.py shell
-
-# Migraciones
 python manage.py makemigrations
 python manage.py migrate
 ```
 
----
-
 ## Configuración del dispositivo
 
-Valores actuales en `apps/attendance/pull.py`:
+Valores en `configuracion/ajustes.py` (sobrescribibles vía `.env`):
 
-| Variable        | Valor          |
-|-----------------|----------------|
-| `DEVICE_IP`     | `10.10.0.3`    |
-| `DEVICE_PORT`   | `4370`         |
-| `DEVICE_PASSWORD` | `0`          |
-| `TIMEOUT`       | `30` segundos  |
-
----
+| Variable             | Valor          |
+|----------------------|----------------|
+| `IP_DISPOSITIVO`     | `10.10.0.3`    |
+| `PUERTO_DISPOSITIVO` | `4370`         |
+| `CLAVE_DISPOSITIVO`  | `0`            |
+| `TIMEOUT_DISPOSITIVO`| `30` segundos  |
+| `SERIAL_DISPOSITIVO` | `AEYU194660027`|
 
 ## Tecnologías
 
-- **Backend**: Django 6, Python 3.14, MySQL 8
+- **Backend**: Django 6.x, Python 3.14, MySQL 8
 - **Frontend**: Bootstrap 5.3, Vanilla JS, CSS3
-- **Dispositivo**: pyzk (librería ZK protocol), ZMM220_TFT
+- **Dispositivo**: pyzk (protocolo ZK), ZMM220_TFT
 - **Scheduler**: Windows Scheduled Task (cada 1 minuto)

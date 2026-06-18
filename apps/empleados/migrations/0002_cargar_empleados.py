@@ -1,0 +1,49 @@
+from django.db import migrations
+
+
+EMPLEADOS = [
+    ("AER0000142", "ALVARO GUSTAVO TAPIA GARCIA"),
+    ("AER0000347", "BRAYAN ARAMIS RANCAÑO BONILLA"),
+    ("AER0000148", "ERICK ALFONSO MATIAS BUENO"),
+    ("AER0000161", "ESLI JOSUE TEJEDA PIÑA"),
+    ("AER0000149", "FELIPE DE JESUS TAPIA GARCIA"),
+    ("AER0000154", "FRANCISCO JAMARILLO SANDOVAL"),
+    ("AER0000155", "GABRIEL ALEJANDRO CRUZ REYES"),
+    ("AER0000168", "GABRIEL IVAN JARAMILLO SANDOVAL"),
+    ("AER0000163", "GERARDO TAPIA GARCIA"),
+    ("AER0000314", "GUADALUPE TAPIA SANCHEZ"),
+    ("AER0000166", "IVAN GIOVANNI GONZALEZ ALVA"),
+    ("AER0000346", "JOSE CANCINO CASTILLO"),
+    ("AER0000156", "JOSE HUMBERTO BARRALES ORTIZ"),
+    ("AER0000138", "JOSE JESUS RANGEL CARREON"),
+    ("AER0000140", "JOSE JUAN RUIZ CISNEROS"),
+    ("AER0000328", "JOSUE LAGUNAS CEDILLO"),
+    ("AER0000143", "JUAN UBALDO ROSALES ELIZALDE"),
+    ("AER0000152", "JULIO CESAR LOPEZ AVILA"),
+    ("AER0000139", "MIGUEL ANGEL PELAEZ CHAVEZ"),
+    ("AER0000146", "OSCAR ADRIAN HERNANDEZ GARCIA"),
+    ("AER0000159", "RUBEN GARCIA GUTIERREZ"),
+    ("AER0000141", "SERGIO HERNANDEZ ISLAS"),
+    ("AER0000151", "SERGIO MONTERRUBIO MEDRANO"),
+    ("AER0000136", "TERESO DE SANTIAGO SALAZAR"),
+    ("AER0000158", "VICTOR ROMAN HERNANDEZ LUNA"),
+    ("AER0000002", "WUILIANS RUIZ VAZQUEZ"),
+    ("AER0000170", "YAHIR HERNANDEZ LUNA"),
+]
+
+
+def cargar_empleados(apps, schema_editor):
+    Empleado = apps.get_model("empleados", "Empleado")
+    for id_original, nombre in EMPLEADOS:
+        Empleado.objects.create(id_original=id_original, nombre=nombre)
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('empleados', '0001_inicial'),
+    ]
+
+    operations = [
+        migrations.RunPython(cargar_empleados),
+    ]

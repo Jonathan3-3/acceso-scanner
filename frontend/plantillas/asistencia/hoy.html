@@ -1,0 +1,117 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Hoy - Control de Acceso{% endblock %}
+
+{% block content %}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3 col-6">
+        <div class="card border-primary text-center py-3 h-100">
+            <div class="card-body">
+                <div class="text-primary fw-bold fs-3">{{ total_empleados }}</div>
+                <small class="text-secondary">Empleados registrados</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-success text-center py-3 h-100">
+            <div class="card-body">
+                <div class="text-success fw-bold fs-3" id="registrosHoy">{{ registros_hoy }}</div>
+                <small class="text-secondary">Registros hoy</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-info text-center py-3 h-100">
+            <div class="card-body">
+                <div class="text-info fw-bold fs-3" id="totalRegistros">{{ total_registros }}</div>
+                <small class="text-secondary">Total registros</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3 col-6">
+        <div class="card border-secondary text-center py-3 h-100">
+            <div class="card-body">
+                <div class="text-secondary fw-bold fs-3" id="puntoEstado">●</div>
+                <small class="text-secondary">FCX <span id="estadoDispositivo">10.10.0.237</span></small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-lg-5">
+        <div class="card border-secondary h-100">
+            <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
+                <span class="small">Última sincronización</span>
+                <small class="text-secondary" id="ultimaSincronizacion">
+                    {% if ultima_sincronizacion %}{{ ultima_sincronizacion|date:"d/m/Y H:i:s" }}{% else %}Nunca{% endif %}
+                </small>
+            </div>
+            <div class="card-body d-flex flex-column">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-secondary">Dispositivo:</span>
+                    <span class="small">10.10.0.237:4370</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="small text-secondary">Último registro:</span>
+                    <span class="small" id="ultimoRegistro">
+                        {% if ultimo_registro %}{{ ultimo_registro|date:"d/m/Y H:i:s" }}{% else %}—{% endif %}
+                    </span>
+                </div>
+                <div class="mt-auto">
+                    <button class="btn btn-outline-info btn-sm w-100" onclick="sincronizarAhora()">
+                        Sincronizar ahora
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7">
+        <div class="card border-secondary h-100">
+            <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
+                <span class="small">Actividad reciente <span id="badgeNuevo" class="badge bg-danger d-none" style="animation: pulse 0.5s;">NUEVO</span></span>
+                <small class="text-secondary" id="ultimaActualizacion"></small>
+            </div>
+            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="tablaReciente">
+                        <thead class="sticky-top">
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Hora</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cuerpoReciente">
+                            <tr>
+                                <td colspan="4" class="text-secondary text-center py-3">
+                                    Esperando registros del dispositivo...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card border-secondary">
+            <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
+                <span class="small">Empleados registrados</span>
+                <span class="badge bg-primary" id="contadorEmpleados"></span>
+            </div>
+            <div class="card-body p-2" style="max-height: 200px; overflow-y: auto;">
+                <div id="listaEmpleados" class="d-flex flex-wrap gap-1"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,361 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Principal - Control de Acceso{% endblock %}
+
+{% block content %}
+
+<style>
+.suggestions-wrap { position: relative; flex: 1; }
+.suggestions-list {
+    position: absolute; top: 100%; left: 0; right: 0; z-index: 1050;
+    max-height: 300px; overflow-y: auto; display: none;
+}
+.suggestions-list.show { display: block; }
+.suggestions-list .dropdown-item {
+    cursor: pointer; padding: 6px 12px; font-size: 0.9rem;
+}
+.suggestions-list .dropdown-item:hover,
+.suggestions-list .dropdown-item.active {
+    background-color: #0d6efd; color: #fff;
+}
+</style>
+
+<div class="card border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col">
+                <label class="form-label small text-secondary">Buscar empleado</label>
+                <div class="d-flex gap-2">
+                    <div class="suggestions-wrap">
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="inputBuscar"
+                                   placeholder="Escribí ID o nombre del empleado..." autocomplete="off">
+                            <button class="btn btn-outline-secondary" type="button" id="btnDesplegar"
+                                    title="Mostrar todos los empleados">
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+                        </div>
+                        <div class="dropdown-menu suggestions-list" id="listaSugerencias"></div>
+                    </div>
+                    <button class="btn btn-primary" id="btnVerEmpleado">Ver</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="seccionDetalle">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h4 class="mb-0" id="nombreEmpleado"></h4>
+    </div>
+
+    <div class="card border-secondary mb-3">
+        <div class="card-body">
+            <div class="d-flex flex-wrap gap-2 mb-3" id="filtrosPredefinidos">
+                <button class="btn btn-outline-primary btn-sm" data-rango="hoy">Hoy</button>
+                <button class="btn btn-outline-primary btn-sm" data-rango="ayer">Ayer</button>
+                <button class="btn btn-outline-primary btn-sm" data-rango="esta_semana">Esta semana</button>
+                <button class="btn btn-outline-primary btn-sm" data-rango="semana_pasada">Semana pasada</button>
+                <button class="btn btn-outline-primary btn-sm active" data-rango="este_mes">Este mes</button>
+                <button class="btn btn-outline-primary btn-sm" data-rango="mes_pasado">Mes pasado</button>
+            </div>
+            <div class="row g-2 align-items-end">
+                <div class="col-auto">
+                    <label class="form-label small text-secondary">Desde</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroDesde">
+                </div>
+                <div class="col-auto">
+                    <label class="form-label small text-secondary">Hasta</label>
+                    <input type="date" class="form-control form-control-sm" id="filtroHasta">
+                </div>
+                <div class="col-auto">
+                    <button class="btn btn-outline-info btn-sm" id="aplicarPersonalizado">Filtrar</button>
+                </div>
+                <div class="col-auto ms-auto">
+                    <button class="btn btn-success btn-sm" id="btnExportarEmpleado">
+                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row g-2 mb-3" id="tarjetasResumen">
+        <div class="col-md-4 col-6">
+            <div class="card border-primary text-center py-2 h-100">
+                <div class="card-body py-2">
+                    <div class="text-primary fw-bold fs-4" id="totalDias">—</div>
+                    <small class="text-secondary">Días</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card border-success text-center py-2 h-100">
+                <div class="card-body py-2">
+                    <div class="text-success fw-bold fs-4" id="totalHoras">—</div>
+                    <small class="text-secondary">Horas totales</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="card border-info text-center py-2 h-100">
+                <div class="card-body py-2">
+                    <div class="text-info fw-bold fs-4" id="promedioHoras">—</div>
+                    <small class="text-secondary">Promedio h/día</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-secondary">
+        <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
+            <span class="small">Registros diarios</span>
+            <small class="text-secondary" id="etiquetaRango"></small>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-dark table-striped table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th>Fecha</th>
+                        <th>Entrada</th>
+                        <th>Salida</th>
+                        <th>Horas</th>
+                    </tr>
+                </thead>
+                <tbody id="cuerpoDetalle">
+                    <tr>
+                        <td colspan="4" class="text-secondary text-center py-3">Selecciona un empleado</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    let empleadoActual = null;
+    let empleados = [];
+    let indiceSeleccionado = -1;
+
+    function formatearHoras(h) {
+        const signo = h < 0 ? '-' : '';
+        h = Math.abs(h);
+        const m = Math.round(h * 60);
+        return signo + Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+    }
+
+    function obtenerRangoFecha(predefinido) {
+        const ahora = new Date();
+        const y = ahora.getFullYear();
+        const m = ahora.getMonth();
+        const d = ahora.getDate();
+        const hoy = new Date(y, m, d);
+
+        function aStr(fecha) {
+            return fecha.getFullYear() + '-' +
+                String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
+                String(fecha.getDate()).padStart(2, '0');
+        }
+
+        switch (predefinido) {
+            case 'hoy': return { desde: aStr(hoy), hasta: aStr(hoy) };
+            case 'ayer': { const ayer = new Date(hoy); ayer.setDate(ayer.getDate() - 1); return { desde: aStr(ayer), hasta: aStr(ayer) }; }
+            case 'esta_semana': { const dow = hoy.getDay() || 7; const lun = new Date(hoy); lun.setDate(lun.getDate() - (dow - 1)); const dom = new Date(lun); dom.setDate(dom.getDate() + 6); return { desde: aStr(lun), hasta: aStr(dom) }; }
+            case 'semana_pasada': { const dow2 = hoy.getDay() || 7; const domPasado = new Date(hoy); domPasado.setDate(domPasado.getDate() - dow2); const lunPasado = new Date(domPasado); lunPasado.setDate(lunPasado.getDate() - 6); return { desde: aStr(lunPasado), hasta: aStr(domPasado) }; }
+            case 'este_mes': return { desde: aStr(new Date(y, m, 1)), hasta: aStr(hoy) };
+            case 'mes_pasado': return { desde: aStr(new Date(y, m - 1, 1)), hasta: aStr(new Date(y, m, 0)) };
+            default: return null;
+        }
+    }
+
+    function cargarDetalle(empId, desde, hasta) {
+        const tbody = $('#cuerpoDetalle');
+        tbody.innerHTML = '<tr><td colspan="4" class="text-secondary text-center py-3">Cargando...</td></tr>';
+
+        const url = '/api/empleado/' + empId + '/detalle/?desde=' + desde + '&hasta=' + hasta;
+        fetch(url)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-3">' + d.error + '</td></tr>';
+                    return;
+                }
+                $('#etiquetaRango').textContent = d.fecha_desde + ' — ' + d.fecha_hasta;
+                const res = d.resumen;
+                $('#totalDias').textContent = res.total_dias;
+                $('#totalHoras').textContent = formatearHoras(res.total_horas);
+                $('#promedioHoras').textContent = formatearHoras(res.promedio_horas);
+                if (!d.dias.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = d.dias.map(dia => {
+                    const dObj = new Date(dia.fecha + 'T12:00:00');
+                    const fechaStr = dObj.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+                    const horasHtml = dia.horas !== null
+                        ? '<span class="badge bg-info text-dark">' + formatearHoras(dia.horas) + '</span>'
+                        : '<span class="badge bg-warning text-dark">En curso</span>';
+                    const salidaHtml = dia.salida === '-'
+                        ? '<span class="text-secondary">-</span>'
+                        : '<strong>' + dia.salida + '</strong>';
+                    return '<tr>' +
+                        '<td class="text-nowrap">' + fechaStr + '</td>' +
+                        '<td><strong>' + dia.entrada + '</strong></td>' +
+                        '<td>' + salidaHtml + '</td>' +
+                        '<td>' + horasHtml + '</td>' +
+                        '</tr>';
+                }).join('');
+            })
+            .catch(() => {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
+            });
+    }
+
+    function mostrarEmpleado(empId, empNombre, empIdVisual) {
+        empleadoActual = empId;
+        $('#nombreEmpleado').innerHTML = empNombre + ' <span class="badge bg-secondary font-monospace fs-6">' + empIdVisual + '</span>';
+        const rango = obtenerRangoFecha('este_mes');
+        $('#filtroDesde').value = rango.desde;
+        $('#filtroHasta').value = rango.hasta;
+        cargarDetalle(empId, rango.desde, rango.hasta);
+        ocultarSugerencias();
+    }
+
+    /* ========== Autocomplete ========== */
+    const input = $('#inputBuscar');
+    const lista = $('#listaSugerencias');
+
+    function ocultarSugerencias() {
+        lista.classList.remove('show');
+        indiceSeleccionado = -1;
+    }
+
+    function filtrarEmpleados(texto) {
+        if (!texto) return empleados.slice(0, 10);
+        const t = texto.toLowerCase();
+        return empleados.filter(function (e) {
+            return e.id_visual.toLowerCase().indexOf(t) !== -1 ||
+                   e.nombre.toLowerCase().indexOf(t) !== -1;
+        }).slice(0, 15);
+    }
+
+    function renderizarSugerencias(filtrados) {
+        lista.innerHTML = '';
+        if (!filtrados.length) { ocultarSugerencias(); return; }
+        filtrados.forEach(function (e, i) {
+            const item = document.createElement('button');
+            item.type = 'button';
+            item.className = 'dropdown-item' + (i === indiceSeleccionado ? ' active' : '');
+            item.textContent = e.id_visual + ' — ' + e.nombre;
+            item.dataset.id = e.id;
+            item.dataset.nombre = e.nombre;
+            item.dataset.idVisual = e.id_visual;
+            item.addEventListener('click', function () {
+                mostrarEmpleado(parseInt(this.dataset.id), this.dataset.nombre, this.dataset.idVisual);
+                input.value = this.dataset.idVisual + ' — ' + this.dataset.nombre;
+            });
+            lista.appendChild(item);
+        });
+        lista.classList.add('show');
+    }
+
+    input.addEventListener('input', function () {
+        indiceSeleccionado = -1;
+        const filtrados = filtrarEmpleados(this.value);
+        renderizarSugerencias(filtrados);
+    });
+
+    input.addEventListener('keydown', function (e) {
+        const items = lista.querySelectorAll('.dropdown-item');
+        if (!items.length) return;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            indiceSeleccionado = Math.min(indiceSeleccionado + 1, items.length - 1);
+            items.forEach(function (el, i) { el.classList.toggle('active', i === indiceSeleccionado); });
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            indiceSeleccionado = Math.max(indiceSeleccionado - 1, 0);
+            items.forEach(function (el, i) { el.classList.toggle('active', i === indiceSeleccionado); });
+        } else if (e.key === 'Enter' && indiceSeleccionado >= 0) {
+            e.preventDefault();
+            const el = items[indiceSeleccionado];
+            mostrarEmpleado(parseInt(el.dataset.id), el.dataset.nombre, el.dataset.idVisual);
+            input.value = el.dataset.idVisual + ' — ' + el.dataset.nombre;
+        } else if (e.key === 'Escape') {
+            ocultarSugerencias();
+        }
+    });
+
+    input.addEventListener('blur', function () {
+        setTimeout(ocultarSugerencias, 200);
+    });
+
+    function mostrarTodos() {
+        const filtrados = filtrarEmpleados(input.value);
+        renderizarSugerencias(filtrados);
+    }
+
+    input.addEventListener('focus', mostrarTodos);
+
+    $('#btnDesplegar').addEventListener('click', function () {
+        if (lista.classList.contains('show')) {
+            ocultarSugerencias();
+        } else {
+            mostrarTodos();
+        }
+    });
+
+    $('#btnVerEmpleado').addEventListener('click', function () {
+        const items = lista.querySelectorAll('.dropdown-item');
+        if (items.length === 1) {
+            const el = items[0];
+            mostrarEmpleado(parseInt(el.dataset.id), el.dataset.nombre, el.dataset.idVisual);
+            input.value = el.dataset.idVisual + ' — ' + el.dataset.nombre;
+        }
+    });
+
+    /* ========== Cargar empleados ========== */
+    fetch('/api/empleados/')
+        .then(r => r.json())
+        .then(function (d) { empleados = d.empleados || []; });
+
+    /* ========== Filtros predefinidos ========== */
+    document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            if (!empleadoActual) return;
+            const rango = obtenerRangoFecha(this.dataset.rango);
+            if (!rango) return;
+            document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            $('#filtroDesde').value = rango.desde;
+            $('#filtroHasta').value = rango.hasta;
+            cargarDetalle(empleadoActual, rango.desde, rango.hasta);
+        });
+    });
+
+    $('#aplicarPersonalizado').addEventListener('click', function () {
+        if (!empleadoActual) return;
+        const desde = $('#filtroDesde').value;
+        const hasta = $('#filtroHasta').value;
+        if (!desde || !hasta) return;
+        document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (b) { b.classList.remove('active'); });
+        cargarDetalle(empleadoActual, desde, hasta);
+    });
+
+    $('#btnExportarEmpleado').addEventListener('click', function () {
+        if (!empleadoActual) return;
+        const desde = $('#filtroDesde').value;
+        const hasta = $('#filtroHasta').value;
+        if (!desde || !hasta) return;
+        window.location.href = '/api/reporte/excel/?desde=' + desde + '&hasta=' + hasta + '&empleado_pk=' + empleadoActual;
+    });
+})();
+</script>
+{% endblock %}

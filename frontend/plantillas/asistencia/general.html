@@ -1,0 +1,235 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}General - Control de Acceso{% endblock %}
+
+{% block content %}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Reporte general de asistencia</h4>
+</div>
+
+<div class="card border-secondary mb-3">
+    <div class="card-body">
+        <div class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label small text-secondary">Desde</label>
+                <input type="date" class="form-control" id="filtroDesde">
+            </div>
+            <div class="col-auto">
+                <label class="form-label small text-secondary">Hasta</label>
+                <input type="date" class="form-control" id="filtroHasta">
+            </div>
+            <div class="col-auto d-flex gap-2">
+                <button class="btn btn-primary" id="btnConsultar">Consultar</button>
+                <button class="btn btn-success" id="btnExportarExcel">
+                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel
+                </button>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap gap-2 mt-3" id="filtrosRapidos">
+            <button class="btn btn-outline-primary btn-sm active" data-rango="este_mes">Este mes</button>
+            <button class="btn btn-outline-primary btn-sm" data-rango="mes_pasado">Mes pasado</button>
+            <button class="btn btn-outline-primary btn-sm" data-rango="esta_semana">Esta semana</button>
+            <button class="btn btn-outline-primary btn-sm" data-rango="semana_pasada">Semana pasada</button>
+        </div>
+    </div>
+</div>
+
+<div class="card border-secondary">
+    <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
+        <div>
+            <span class="small">Registros por empleado</span>
+        </div>
+        <small class="text-secondary" id="infoGeneral"></small>
+    </div>
+    <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
+        <table class="table table-dark align-middle mb-0">
+            <thead class="sticky-top">
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Fecha</th>
+                    <th>Entrada</th>
+                    <th>Salida</th>
+                    <th>Horas</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpoGeneral">
+                <tr>
+                    <td colspan="6" class="text-secondary text-center py-3">
+                        Selecciona un rango de fechas
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+    'use strict';
+    const $ = (sel, ctx) => (ctx || document).querySelector(sel);
+    let ultimoDesde = '';
+    let ultimoHasta = '';
+
+    function formatearHoras(h) {
+        const signo = h < 0 ? '-' : '';
+        h = Math.abs(h);
+        const m = Math.round(h * 60);
+        return signo + Math.floor(m / 60) + 'h ' + (m % 60) + 'm';
+    }
+
+    function formatearFecha(isoStr) {
+        if (!isoStr) return '';
+        var parts = isoStr.split('-');
+        var d = new Date(parts[0], parts[1] - 1, parts[2]);
+        return d.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
+    }
+
+    function obtenerRangoFecha(predefinido) {
+        const ahora = new Date();
+        const y = ahora.getFullYear();
+        const m = ahora.getMonth();
+        const d = ahora.getDate();
+        const hoy = new Date(y, m, d);
+
+        function aStr(fecha) {
+            return fecha.getFullYear() + '-' +
+                String(fecha.getMonth() + 1).padStart(2, '0') + '-' +
+                String(fecha.getDate()).padStart(2, '0');
+        }
+
+        switch (predefinido) {
+            case 'esta_semana': { const dow = hoy.getDay() || 7; const lun = new Date(hoy); lun.setDate(lun.getDate() - (dow - 1)); const dom = new Date(lun); dom.setDate(dom.getDate() + 6); return { desde: aStr(lun), hasta: aStr(dom) }; }
+            case 'semana_pasada': { const dow2 = hoy.getDay() || 7; const domPasado = new Date(hoy); domPasado.setDate(domPasado.getDate() - dow2); const lunPasado = new Date(domPasado); lunPasado.setDate(lunPasado.getDate() - 6); return { desde: aStr(lunPasado), hasta: aStr(domPasado) }; }
+            case 'este_mes': return { desde: aStr(new Date(y, m, 1)), hasta: aStr(hoy) };
+            case 'mes_pasado': return { desde: aStr(new Date(y, m - 1, 1)), hasta: aStr(new Date(y, m, 0)) };
+            default: return null;
+        }
+    }
+
+    function agruparPorEmpleado(resultados) {
+        if (!resultados || !resultados.length) return [];
+        var grupos = {};
+        resultados.forEach(function (r) {
+            var key = r.empleado_pk;
+            if (!grupos[key]) {
+                grupos[key] = {
+                    empleado_id: r.empleado_id,
+                    empleado_pk: r.empleado_pk,
+                    nombre: r.nombre,
+                    total_horas: 0,
+                    registros: []
+                };
+            }
+            grupos[key].registros.push(r);
+            if (r.horas !== null) grupos[key].total_horas += r.horas;
+        });
+        var resultado = [];
+        Object.keys(grupos).forEach(function (k) {
+            var g = grupos[k];
+            g.registros.sort(function (a, b) { return a.fecha.localeCompare(b.fecha); });
+            resultado.push(g);
+        });
+        resultado.sort(function (a, b) { return a.nombre.localeCompare(b.nombre); });
+        return resultado;
+    }
+
+    function cargarGeneral(desde, hasta) {
+        ultimoDesde = desde;
+        ultimoHasta = hasta;
+        const tbody = $('#cuerpoGeneral');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-secondary text-center py-3">Cargando...</td></tr>';
+
+        fetch('/api/reporte/?desde=' + desde + '&hasta=' + hasta)
+            .then(r => r.json())
+            .then(d => {
+                if (d.error) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">' + d.error + '</td></tr>';
+                    return;
+                }
+
+                if (!d.resultados || !d.resultados.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    return;
+                }
+
+                var grupos = agruparPorEmpleado(d.resultados);
+                var info = $('#infoGeneral');
+                var totalEmp = grupos.length;
+                var totalHoras = grupos.reduce(function (s, g) { return s + g.total_horas; }, 0);
+                info.textContent = totalEmp + ' empleado(s) · ' + formatearHoras(totalHoras) + ' total';
+
+                var html = '';
+                grupos.forEach(function (g, idx) {
+                    var badgeClass = 'bg-' + (idx % 2 === 0 ? 'secondary' : 'info');
+                    html += '<tr class="table-active">' +
+                        '<td colspan="6" class="py-2">' +
+                        '<span class="badge ' + badgeClass + ' font-monospace me-2">' + g.empleado_id + '</span> ' +
+                        '<strong>' + g.nombre + '</strong> ' +
+                        '<span class="text-secondary small ms-2">' + g.registros.length + ' registro(s) · ' + formatearHoras(g.total_horas) + '</span>' +
+                        '</td></tr>';
+                    g.registros.forEach(function (r) {
+                        var entrada = '<strong>' + r.entrada + '</strong>';
+                        var salida = r.salida || '-';
+                        var horas = r.horas !== null
+                            ? '<span class="badge bg-info text-dark">' + formatearHoras(r.horas) + '</span>'
+                            : '<span class="badge bg-warning text-dark">En curso</span>';
+                        html += '<tr>' +
+                            '<td></td>' +
+                            '<td></td>' +
+                            '<td class="text-nowrap small">' + formatearFecha(r.fecha) + '</td>' +
+                            '<td>' + entrada + '</td>' +
+                            '<td>' + salida + '</td>' +
+                            '<td>' + horas + '</td>' +
+                            '</tr>';
+                    });
+                });
+                tbody.innerHTML = html;
+            })
+            .catch(function () {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
+            });
+    }
+
+    function marcarRangoActivo(rango) {
+        document.querySelectorAll('#filtrosRapidos .btn').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector('#filtrosRapidos .btn[data-rango="' + rango + '"]');
+        if (btn) btn.classList.add('active');
+    }
+
+    document.querySelectorAll('#filtrosRapidos .btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const rango = obtenerRangoFecha(this.dataset.rango);
+            if (!rango) return;
+            marcarRangoActivo(this.dataset.rango);
+            $('#filtroDesde').value = rango.desde;
+            $('#filtroHasta').value = rango.hasta;
+            cargarGeneral(rango.desde, rango.hasta);
+        });
+    });
+
+    $('#btnConsultar').addEventListener('click', function () {
+        const desde = $('#filtroDesde').value;
+        const hasta = $('#filtroHasta').value;
+        if (!desde || !hasta) return;
+        marcarRangoActivo('');
+        cargarGeneral(desde, hasta);
+    });
+
+    $('#btnExportarExcel').addEventListener('click', function () {
+        if (!ultimoDesde || !ultimoHasta) return;
+        window.location.href = '/api/reporte/excel/?desde=' + ultimoDesde + '&hasta=' + ultimoHasta;
+    });
+
+    const rango = obtenerRangoFecha('este_mes');
+    $('#filtroDesde').value = rango.desde;
+    $('#filtroHasta').value = rango.hasta;
+    cargarGeneral(rango.desde, rango.hasta);
+})();
+</script>
+{% endblock %}
