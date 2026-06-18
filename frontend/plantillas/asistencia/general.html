@@ -145,7 +145,7 @@
         const tbody = $('#cuerpoGeneral');
         tbody.innerHTML = '<tr><td colspan="6" class="text-secondary text-center py-3">Cargando...</td></tr>';
 
-        fetch('/api/reporte/?desde=' + desde + '&hasta=' + hasta)
+        fetch('/asistencia/api/reporte/?desde=' + desde + '&hasta=' + hasta)
             .then(r => r.json())
             .then(d => {
                 if (d.error) {
@@ -223,7 +223,7 @@
 
     $('#btnExportarExcel').addEventListener('click', function () {
         if (!ultimoDesde || !ultimoHasta) return;
-        window.location.href = '/api/reporte/excel/?desde=' + ultimoDesde + '&hasta=' + ultimoHasta;
+        window.location.href = '/asistencia/api/reporte/excel/?desde=' + ultimoDesde + '&hasta=' + ultimoHasta;
     });
 
     const rango = obtenerRangoFecha('este_mes');

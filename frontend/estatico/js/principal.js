@@ -23,7 +23,7 @@
     }
 
     function enlaceEmpleado(pk, nombre) {
-        return '<a href="/empleado/' + pk + '/" class="text-decoration-none text-reset">' + nombre + '</a>';
+        return '<a href="/asistencia/empleado/' + pk + '/" class="text-decoration-none text-reset">' + nombre + '</a>';
     }
 
     function actualizarReloj() {
@@ -34,13 +34,13 @@
     actualizarReloj();
 
     /* ============= Empleados sidebar ============= */
-    obtenerJsonConTimeout('/api/empleados/')
+    obtenerJsonConTimeout('/asistencia/api/empleados/')
         .then(function (d) {
             var el = $('#listaEmpleados');
             var ec = $('#contadorEmpleados');
             if (el && d.empleados) {
                 el.innerHTML = d.empleados.map(function (e) {
-                    return '<a href="/empleado/' + e.id + '/" class="badge bg-secondary text-decoration-none">' + e.id_visual + ' — ' + e.nombre + '</a>';
+                    return '<a href="/asistencia/empleado/' + e.id + '/" class="badge bg-secondary text-decoration-none">' + e.id_visual + ' — ' + e.nombre + '</a>';
                 }).join('');
             }
             if (ec) ec.textContent = d.empleados ? d.empleados.length : 0;
@@ -79,7 +79,7 @@
 
     function consultarRegistrosRecientes() {
         if (!pollingActivo) return;
-        obtenerJsonConTimeout('/api/registros-recientes/')
+        obtenerJsonConTimeout('/asistencia/api/registros-recientes/')
             .then(function (d) {
                 var count = d.total || 0;
                 if (count > ultimoConteoRegistros && ultimoConteoRegistros > 0) {
@@ -98,7 +98,7 @@
 
     function consultarEstadisticas() {
         if (!pollingActivo) return;
-        obtenerJsonConTimeout('/api/estado-sincronizacion/')
+        obtenerJsonConTimeout('/asistencia/api/estado-sincronizacion/')
             .then(function (d) {
                 var dot = $('#puntoEstado');
                 if (dot) {
@@ -130,7 +130,7 @@
         if (lt) lt.textContent = 'Sincronizando...';
         if (btn) btn.disabled = true;
         pollingActivo = false;
-        obtenerJsonConTimeout('/api/sincronizar-dispositivo/', 60000)
+        obtenerJsonConTimeout('/asistencia/api/sincronizar-dispositivo/', 60000)
             .then(function (d) {
                 var msg = d.asistencia
                     ? (d.asistencia.nuevos + ' nuevos, ' + d.asistencia.omitidos + ' existentes')

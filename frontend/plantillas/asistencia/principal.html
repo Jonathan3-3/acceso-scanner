@@ -179,7 +179,7 @@
         const tbody = $('#cuerpoDetalle');
         tbody.innerHTML = '<tr><td colspan="4" class="text-secondary text-center py-3">Cargando...</td></tr>';
 
-        const url = '/api/empleado/' + empId + '/detalle/?desde=' + desde + '&hasta=' + hasta;
+        const url = '/asistencia/api/empleado/' + empId + '/detalle/?desde=' + desde + '&hasta=' + hasta;
         fetch(url)
             .then(r => r.json())
             .then(d => {
@@ -322,7 +322,7 @@
     });
 
     /* ========== Cargar empleados ========== */
-    fetch('/api/empleados/')
+    fetch('/asistencia/api/empleados/')
         .then(r => r.json())
         .then(function (d) { empleados = d.empleados || []; });
 
@@ -354,7 +354,7 @@
         const desde = $('#filtroDesde').value;
         const hasta = $('#filtroHasta').value;
         if (!desde || !hasta) return;
-        window.location.href = '/api/reporte/excel/?desde=' + desde + '&hasta=' + hasta + '&empleado_pk=' + empleadoActual;
+        window.location.href = '/asistencia/api/reporte/excel/?desde=' + desde + '&hasta=' + hasta + '&empleado_pk=' + empleadoActual;
     });
 })();
 </script>
