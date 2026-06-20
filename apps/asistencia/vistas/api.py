@@ -1,5 +1,6 @@
 from django.http import JsonResponse, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.views.decorators.csrf import csrf_exempt
 from django.db.models import Max, Func, DateField
 from django.utils import timezone
 from datetime import date, datetime
@@ -9,6 +10,7 @@ from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
 from ..models import RegistroAcceso
+from ..servicios import procesar_archivo_dat, emparejar_empleados, calcular_reporte, obtener_empleados_sin_registro
 from apps.empleados.models import Empleado
 
 
@@ -660,3 +662,38 @@ def fechas_disponibles(request):
         .order_by('-d')
     )
     return JsonResponse({'fechas': [f.isoformat() for f in fechas if f is not None]})
+
+
+@csrf_exempt
+def subir_archivo(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Usa POST'}, status=405)
+
+    archivo = request.FILES.get('file')
+    if not archivo:
+        return JsonResponse({'error': 'No se recibi\u00f3 archivo'}, status=400)
+
+    contenido = archivo.read().decode('utf-8', errors='replace')
+    registros_crudos = procesar_archivo_dat(contenido)
+    emparejados = emparejar_empleados(registros_crudos)
+
+    if not emparejados:
+        return JsonResponse({'error': 'No se encontraron registros v\u00e1lidos'}, status=400)
+
+    for emp, dt, linea in emparejados:
+        RegistroAcceso.objects.get_or_create(
+            empleado=emp,
+            marcado_en=dt,
+            defaults={'datos_originales': linea, 'serial_dispositivo': 'upload'}
+        )
+
+    resultados, totales = calcular_reporte(emparejados)
+    sin_registro = obtener_empleados_sin_registro(registros_crudos)
+
+    return JsonResponse({
+        'resultados': resultados,
+        'totales': totales,
+        'sin_registro': sin_registro,
+        'total_empleados': len(totales),
+        'total_registros': len(emparejados),
+    })
