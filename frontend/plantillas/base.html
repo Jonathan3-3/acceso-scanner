@@ -11,35 +11,34 @@
 </head>
 <body>
 
-    <nav class="navbar navbar-dark bg-dark border-bottom border-secondary mb-4">
+    <nav class="navbar navbar-modern mb-4">
         <div class="container">
-            <a class="navbar-brand" href="{% url 'principal' %}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-fingerprint me-2" viewBox="0 0 16 16">
-                    <path d="M8.06 6.5a.5.5 0 0 1 .5.5v.776a11.5 11.5 0 0 1-.092 1.763.5.5 0 0 1-.992-.1A10.5 10.5 0 0 0 7.56 7.5v-.5a.5.5 0 0 1 .5-.5Z"/>
-                    <path d="M7.5 3.5A5 5 0 0 1 12.5 8v1.5a.5.5 0 0 1-1 0V8a4 4 0 0 0-8 0v.78a7.5 7.5 0 0 1-.18 1.684.5.5 0 1 1-.976-.218A6.5 6.5 0 0 0 2.5 8.5V8a5 5 0 0 1 5-5Z"/>
-                    <path d="M11 8.5a.5.5 0 0 1 .5.5v2.026a7.5 7.5 0 0 1-.4 2.367.5.5 0 0 1-.946-.326 6.5 6.5 0 0 0 .346-2.041V9a.5.5 0 0 1 .5-.5Z"/>
-                    <path d="M9.5 8.5a.5.5 0 0 1 .5.5v1.77a6.56 6.56 0 0 1-.292 1.93.5.5 0 1 1-.948-.316A5.56 5.56 0 0 0 9 10.77V9a.5.5 0 0 1 .5-.5Z"/>
-                    <path d="M6.5 8.5a.5.5 0 0 1 .5.5v1.583c0 .57.064 1.138.19 1.694a.5.5 0 1 1-.977.21A7.04 7.04 0 0 1 6 10.583V9a.5.5 0 0 1 .5-.5Z"/>
-                    <path d="M5.5 8.5a.5.5 0 0 1 .5.5v1.2c0 .495.056.988.17 1.47a.5.5 0 0 1-.98.173A8.12 8.12 0 0 1 5 10.2V9a.5.5 0 0 1 .5-.5Z"/>
-                    <path d="M7.5 12.5A.5.5 0 0 1 8 13v.5a.5.5 0 0 1-1 0v-.5a.5.5 0 0 1 .5-.5Z"/>
-                </svg>
-                Control de Acceso
+            <a class="navbar-brand d-flex align-items-center gap-2" href="{% url 'principal' %}">
+                <i class="bi bi-shield-lock fs-4" style="-webkit-text-fill-color: initial; fill: currentColor;"></i>
+                <span>Control de Acceso</span>
             </a>
-            <div class="d-flex gap-3">
-                <a class="nav-link text-light small {% if request.path == '/' %}active fw-semibold{% endif %}" href="{% url 'principal' %}">Principal</a>
-                <a class="nav-link text-light small {% if '/general' in request.path %}active fw-semibold{% endif %}" href="{% url 'general' %}">General</a>
-                <a class="nav-link text-light small {% if '/hoy' in request.path %}active fw-semibold{% endif %}" href="{% url 'hoy' %}">Hoy</a>
+            <div class="d-flex gap-1">
+                <a class="nav-link-custom {% if request.path == '/' or '/principal' in request.path %}active{% endif %}" href="{% url 'principal' %}">
+                    <i class="bi bi-person-badge me-1"></i>Principal
+                </a>
+                <a class="nav-link-custom {% if '/general' in request.path %}active{% endif %}" href="{% url 'general' %}">
+                    <i class="bi bi-table me-1"></i>General
+                </a>
+                <a class="nav-link-custom {% if '/hoy' in request.path %}active{% endif %}" href="{% url 'hoy' %}">
+                    <i class="bi bi-activity me-1"></i>Hoy
+                </a>
             </div>
-            <span class="navbar-text small text-secondary" id="reloj"></span>
         </div>
     </nav>
 
-    <main class="container">
+    <main class="container" style="position: relative; z-index: 1;">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="container mt-5 mb-3">
-        <p class="text-center text-secondary small">Scanner AccessPRO — Control de Asistencia</p>
+    <footer class="footer-modern" style="position: relative; z-index: 1;">
+        <div class="container">
+            <i class="bi bi-fingerprint me-1"></i> Scanner AccessPRO — Control de Asistencia
+        </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>

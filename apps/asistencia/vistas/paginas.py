@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.db.models import Max
 from django.utils import timezone
+from django.conf import settings
 from apps.empleados.models import Empleado
 from ..models import RegistroAcceso
 
@@ -36,4 +37,6 @@ def hoy(request):
         'registros_hoy': registros_hoy,
         'ultimo_registro': ultimo,
         'ultima_sincronizacion': ultima_sincro,
+        'ip_dispositivo': settings.IP_DISPOSITIVO,
+        'puerto_dispositivo': settings.PUERTO_DISPOSITIVO,
     })

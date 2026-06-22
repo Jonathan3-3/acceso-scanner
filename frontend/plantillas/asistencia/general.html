@@ -5,46 +5,40 @@
 
 {% block content %}
 
-<div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Reporte general de asistencia</h4>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="fw-bold mb-0" style="color: #fff;"><i class="bi bi-table me-2"></i>Reporte general</h4>
 </div>
 
-<div class="card border-secondary mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col-auto">
-                <label class="form-label small text-secondary">Desde</label>
-                <input type="date" class="form-control" id="filtroDesde">
-            </div>
-            <div class="col-auto">
-                <label class="form-label small text-secondary">Hasta</label>
-                <input type="date" class="form-control" id="filtroHasta">
-            </div>
-            <div class="col-auto d-flex gap-2">
-                <button class="btn btn-primary" id="btnConsultar">Consultar</button>
-                <button class="btn btn-success" id="btnExportarExcel">
-                    <i class="bi bi-file-earmark-excel"></i> Exportar Excel
-                </button>
-            </div>
+<div class="glass-card mb-4 p-3">
+    <div class="row g-2 align-items-end">
+        <div class="col-auto">
+            <label class="form-label small text-secondary mb-1"><i class="bi bi-calendar me-1"></i>Desde</label>
+            <input type="date" class="form-control form-control-sm" id="filtroDesde" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #fff;">
         </div>
-        <div class="d-flex flex-wrap gap-2 mt-3" id="filtrosRapidos">
-            <button class="btn btn-outline-primary btn-sm active" data-rango="este_mes">Este mes</button>
-            <button class="btn btn-outline-primary btn-sm" data-rango="mes_pasado">Mes pasado</button>
-            <button class="btn btn-outline-primary btn-sm" data-rango="esta_semana">Esta semana</button>
-            <button class="btn btn-outline-primary btn-sm" data-rango="semana_pasada">Semana pasada</button>
+        <div class="col-auto">
+            <label class="form-label small text-secondary mb-1"><i class="bi bi-calendar me-1"></i>Hasta</label>
+            <input type="date" class="form-control form-control-sm" id="filtroHasta" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #fff;">
         </div>
+        <div class="col-auto d-flex gap-2">
+            <button class="btn btn-modern btn-primary" id="btnConsultar"><i class="bi bi-search me-1"></i>Consultar</button>
+            <button class="btn btn-modern btn-success" id="btnExportarExcel"><i class="bi bi-file-earmark-excel me-1"></i>Excel</button>
+        </div>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3" id="filtrosRapidos">
+        <button class="btn-filter active" data-rango="este_mes">Este mes</button>
+        <button class="btn-filter" data-rango="mes_pasado">Mes pasado</button>
+        <button class="btn-filter" data-rango="esta_semana">Esta semana</button>
+        <button class="btn-filter" data-rango="semana_pasada">Semana pasada</button>
     </div>
 </div>
 
-<div class="card border-secondary">
-    <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
-        <div>
-            <span class="small">Registros por empleado</span>
-        </div>
-        <small class="text-secondary" id="infoGeneral"></small>
+<div class="glass-card">
+    <div class="px-3 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span class="fw-semibold" style="color: rgba(255,255,255,0.8);"><i class="bi bi-people me-2"></i>Registros por empleado</span>
+        <small style="color: rgba(255,255,255,0.35);" id="infoGeneral"></small>
     </div>
     <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
-        <table class="table table-dark align-middle mb-0">
+        <table class="table table-modern align-middle mb-0">
             <thead class="sticky-top">
                 <tr>
                     <th>ID</th>
@@ -61,8 +55,8 @@
             </thead>
             <tbody id="cuerpoGeneral">
                 <tr>
-                    <td colspan="10" class="text-secondary text-center py-3">
-                        Selecciona un rango de fechas
+                    <td colspan="10" class="text-center py-4" style="color: rgba(255,255,255,0.3);">
+                        <i class="bi bi-calendar-range me-1"></i>Selecciona un rango de fechas
                     </td>
                 </tr>
             </tbody>
@@ -117,8 +111,8 @@
     }
 
     function badgeHoras(valor) {
-        if (valor === null || valor === undefined) return '<span class="badge bg-warning text-dark">En curso</span>';
-        return '<span class="badge bg-info text-dark">' + formatearHoras(valor) + '</span>';
+        if (valor === null || valor === undefined) return '<span class="badge badge-modern bg-warning">En curso</span>';
+        return '<span class="badge badge-modern bg-info" style="color:#000;">' + formatearHoras(valor) + '</span>';
     }
 
     function agruparPorEmpleado(resultados) {
@@ -154,7 +148,7 @@
         ultimoDesde = desde;
         ultimoHasta = hasta;
         const tbody = $('#cuerpoGeneral');
-        tbody.innerHTML = '<tr><td colspan="10" class="text-secondary text-center py-3">Cargando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4" style="color: rgba(255,255,255,0.3);">Cargando...</td></tr>';
 
         fetch('/asistencia/api/reporte/?desde=' + desde + '&hasta=' + hasta)
             .then(r => r.json())
@@ -165,7 +159,7 @@
                 }
 
                 if (!d.resultados || !d.resultados.length) {
-                    tbody.innerHTML = '<tr><td colspan="10" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-center py-4" style="color: rgba(255,255,255,0.3);">Sin registros en este período</td></tr>';
                     return;
                 }
 
@@ -177,27 +171,26 @@
 
                 var html = '';
                 grupos.forEach(function (g, idx) {
-                    var badgeClass = 'bg-' + (idx % 2 === 0 ? 'secondary' : 'info');
                     var gTotal = formatearHoras(g.total_comida + g.total_jornada);
-                    html += '<tr class="table-active">' +
-                        '<td colspan="10" class="py-2">' +
-                        '<span class="badge ' + badgeClass + ' font-monospace me-2">' + g.empleado_id + '</span> ' +
-                        '<strong>' + g.nombre + '</strong> ' +
-                        '<span class="text-secondary small ms-2">' + g.registros.length + ' registro(s) · ' + gTotal + '</span>' +
+                    html += '<tr class="group-header">' +
+                        '<td colspan="10" class="py-2 px-3">' +
+                        '<span class="badge badge-modern bg-primary font-monospace me-2">' + g.empleado_id + '</span> ' +
+                        '<strong style="color:#fff;">' + g.nombre + '</strong> ' +
+                        '<span class="ms-2" style="color: rgba(255,255,255,0.35); font-size:0.85rem;">' + g.registros.length + ' día(s) · ' + gTotal + '</span>' +
                         '</td></tr>';
                     g.registros.forEach(function (r) {
                         var inc = r.incidencia
-                            ? '<span class="badge bg-danger">' + r.incidencia + '</span>'
+                            ? '<span class="badge badge-modern bg-danger">' + r.incidencia + '</span>'
                             : '';
                         html += '<tr>' +
                             '<td></td>' +
                             '<td></td>' +
-                            '<td class="text-nowrap small">' + formatearFecha(r.fecha) + '</td>' +
-                            '<td>' + (r.comida_inicio || '-') + '</td>' +
-                            '<td>' + (r.comida_fin || '-') + '</td>' +
+                            '<td class="text-nowrap fw-medium" style="font-size:0.85rem;">' + formatearFecha(r.fecha) + '</td>' +
+                            '<td style="font-feature-settings: \'tnum\';">' + (r.comida_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
+                            '<td style="font-feature-settings: \'tnum\';">' + (r.comida_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                             '<td>' + badgeHoras(r.comida_horas) + '</td>' +
-                            '<td>' + (r.jornada_inicio || '-') + '</td>' +
-                            '<td>' + (r.jornada_fin || '-') + '</td>' +
+                            '<td style="font-feature-settings: \'tnum\';">' + (r.jornada_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
+                            '<td style="font-feature-settings: \'tnum\';">' + (r.jornada_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                             '<td>' + badgeHoras(r.jornada_horas) + '</td>' +
                             '<td>' + inc + '</td>' +
                             '</tr>';
@@ -211,12 +204,12 @@
     }
 
     function marcarRangoActivo(rango) {
-        document.querySelectorAll('#filtrosRapidos .btn').forEach(b => b.classList.remove('active'));
-        const btn = document.querySelector('#filtrosRapidos .btn[data-rango="' + rango + '"]');
+        document.querySelectorAll('#filtrosRapidos .btn-filter').forEach(b => b.classList.remove('active'));
+        const btn = document.querySelector('#filtrosRapidos .btn-filter[data-rango="' + rango + '"]');
         if (btn) btn.classList.add('active');
     }
 
-    document.querySelectorAll('#filtrosRapidos .btn').forEach(btn => {
+    document.querySelectorAll('#filtrosRapidos .btn-filter').forEach(btn => {
         btn.addEventListener('click', function () {
             const rango = obtenerRangoFecha(this.dataset.rango);
             if (!rango) return;

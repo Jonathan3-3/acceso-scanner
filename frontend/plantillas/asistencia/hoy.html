@@ -7,34 +7,34 @@
 
 <div class="row g-3 mb-4">
     <div class="col-md-3 col-6">
-        <div class="card border-primary text-center py-3 h-100">
-            <div class="card-body">
-                <div class="text-primary fw-bold fs-3">{{ total_empleados }}</div>
-                <small class="text-secondary">Empleados registrados</small>
+        <div class="glass-card stat-card blue text-center p-3 h-100">
+            <div class="card-body py-2">
+                <div class="stat-number fs-3">{{ total_empleados }}</div>
+                <small style="color: rgba(255,255,255,0.5);">Empleados registrados</small>
             </div>
         </div>
     </div>
     <div class="col-md-3 col-6">
-        <div class="card border-success text-center py-3 h-100">
-            <div class="card-body">
-                <div class="text-success fw-bold fs-3" id="registrosHoy">{{ registros_hoy }}</div>
-                <small class="text-secondary">Registros hoy</small>
+        <div class="glass-card stat-card green text-center p-3 h-100">
+            <div class="card-body py-2">
+                <div class="stat-number fs-3" id="registrosHoy">{{ registros_hoy }}</div>
+                <small style="color: rgba(255,255,255,0.5);">Registros hoy</small>
             </div>
         </div>
     </div>
     <div class="col-md-3 col-6">
-        <div class="card border-info text-center py-3 h-100">
-            <div class="card-body">
-                <div class="text-info fw-bold fs-3" id="totalRegistros">{{ total_registros }}</div>
-                <small class="text-secondary">Total registros</small>
+        <div class="glass-card stat-card purple text-center p-3 h-100">
+            <div class="card-body py-2">
+                <div class="stat-number fs-3" id="totalRegistros">{{ total_registros }}</div>
+                <small style="color: rgba(255,255,255,0.5);">Total registros</small>
             </div>
         </div>
     </div>
     <div class="col-md-3 col-6">
-        <div class="card border-secondary text-center py-3 h-100">
-            <div class="card-body">
-                <div class="text-secondary fw-bold fs-3" id="puntoEstado">●</div>
-                <small class="text-secondary">FCX <span id="estadoDispositivo">10.10.0.237</span></small>
+        <div class="glass-card stat-card orange text-center p-3 h-100">
+            <div class="card-body py-2">
+                <div class="stat-number fs-3" id="puntoEstado">&#9679;</div>
+                <small style="color: rgba(255,255,255,0.5);"><span id="estadoDispositivo">FCX {{ ip_dispositivo }}</span></small>
             </div>
         </div>
     </div>
@@ -42,42 +42,43 @@
 
 <div class="row g-3 mb-4">
     <div class="col-lg-5">
-        <div class="card border-secondary h-100">
-            <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
-                <span class="small">Última sincronización</span>
-                <small class="text-secondary" id="ultimaSincronizacion">
+        <div class="glass-card h-100">
+            <div class="px-3 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <span class="fw-semibold" style="color: rgba(255,255,255,0.8);"><i class="bi bi-arrow-repeat me-2"></i>Sincronización</span>
+                <small style="color: rgba(255,255,255,0.35);" id="ultimaSincronizacion">
                     {% if ultima_sincronizacion %}{{ ultima_sincronizacion|date:"d/m/Y H:i:s" }}{% else %}Nunca{% endif %}
                 </small>
             </div>
-            <div class="card-body d-flex flex-column">
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small text-secondary">Dispositivo:</span>
-                    <span class="small">10.10.0.237:4370</span>
+            <div class="p-3 d-flex flex-column gap-2">
+                <div class="card-section d-flex justify-content-between align-items-center">
+                    <span style="color: rgba(255,255,255,0.5); font-size:0.85rem;">Dispositivo</span>
+                    <span style="color: #fff; font-size:0.85rem;">{{ ip_dispositivo }}:{{ puerto_dispositivo }}</span>
                 </div>
-                <div class="d-flex justify-content-between align-items-center mb-2">
-                    <span class="small text-secondary">Último registro:</span>
-                    <span class="small" id="ultimoRegistro">
+                <div class="card-section d-flex justify-content-between align-items-center">
+                    <span style="color: rgba(255,255,255,0.5); font-size:0.85rem;">Último registro</span>
+                    <span style="color: #fff; font-size:0.85rem;" id="ultimoRegistro">
                         {% if ultimo_registro %}{{ ultimo_registro|date:"d/m/Y H:i:s" }}{% else %}—{% endif %}
                     </span>
                 </div>
-                <div class="mt-auto">
-                    <button class="btn btn-outline-info btn-sm w-100" onclick="sincronizarAhora()">
-                        Sincronizar ahora
-                    </button>
-                </div>
+                <button class="btn btn-modern btn-outline-info w-100 mt-2" onclick="sincronizarAhora()">
+                    <i class="bi bi-arrow-repeat me-1"></i>Sincronizar ahora
+                </button>
             </div>
         </div>
     </div>
 
     <div class="col-lg-7">
-        <div class="card border-secondary h-100">
-            <div class="card-header bg-transparent border-secondary d-flex justify-content-between align-items-center py-2">
-                <span class="small">Actividad reciente <span id="badgeNuevo" class="badge bg-danger d-none" style="animation: pulse 0.5s;">NUEVO</span></span>
-                <small class="text-secondary" id="ultimaActualizacion"></small>
+        <div class="glass-card h-100">
+            <div class="px-3 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <span class="fw-semibold" style="color: rgba(255,255,255,0.8);">
+                    <i class="bi bi-activity me-2"></i>Actividad reciente
+                    <span id="badgeNuevo" class="badge badge-modern bg-danger d-none" style="animation: pulse 0.5s;">NUEVO</span>
+                </span>
+                <small style="color: rgba(255,255,255,0.35);" id="ultimaActualizacion"></small>
             </div>
-            <div class="card-body p-0" style="max-height: 400px; overflow-y: auto;">
+            <div class="p-0" style="max-height: 400px; overflow-y: auto;">
                 <div class="table-responsive">
-                    <table class="table table-dark table-hover align-middle mb-0" id="tablaReciente">
+                    <table class="table table-modern align-middle mb-0" id="tablaReciente">
                         <thead class="sticky-top">
                             <tr>
                                 <th>ID</th>
@@ -88,8 +89,8 @@
                         </thead>
                         <tbody id="cuerpoReciente">
                             <tr>
-                                <td colspan="4" class="text-secondary text-center py-3">
-                                    Esperando registros del dispositivo...
+                                <td colspan="4" class="text-center py-4" style="color: rgba(255,255,255,0.3);">
+                                    <i class="bi bi-clock me-1"></i>Esperando registros del dispositivo...
                                 </td>
                             </tr>
                         </tbody>
@@ -102,12 +103,12 @@
 
 <div class="row g-3">
     <div class="col-12">
-        <div class="card border-secondary">
-            <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
-                <span class="small">Empleados registrados</span>
-                <span class="badge bg-primary" id="contadorEmpleados"></span>
+        <div class="glass-card">
+            <div class="px-3 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+                <span class="fw-semibold" style="color: rgba(255,255,255,0.8);"><i class="bi bi-person-rolodex me-2"></i>Empleados registrados</span>
+                <span class="badge badge-modern bg-primary" id="contadorEmpleados"></span>
             </div>
-            <div class="card-body p-2" style="max-height: 200px; overflow-y: auto;">
+            <div class="p-2" style="max-height: 200px; overflow-y: auto;">
                 <div id="listaEmpleados" class="d-flex flex-wrap gap-1"></div>
             </div>
         </div>

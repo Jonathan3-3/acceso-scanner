@@ -5,116 +5,97 @@
 
 {% block content %}
 
-<style>
-.suggestions-wrap { position: relative; flex: 1; }
-.suggestions-list {
-    position: absolute; top: 100%; left: 0; right: 0; z-index: 1050;
-    max-height: 300px; overflow-y: auto; display: none;
-}
-.suggestions-list.show { display: block; }
-.suggestions-list .dropdown-item {
-    cursor: pointer; padding: 6px 12px; font-size: 0.9rem;
-}
-.suggestions-list .dropdown-item:hover,
-.suggestions-list .dropdown-item.active {
-    background-color: #0d6efd; color: #fff;
-}
-</style>
-
-<div class="card border-secondary mb-3">
-    <div class="card-body">
-        <div class="row g-2 align-items-end">
-            <div class="col">
-                <label class="form-label small text-secondary">Buscar empleado</label>
-                <div class="d-flex gap-2">
-                    <div class="suggestions-wrap">
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="inputBuscar"
-                                   placeholder="Escribí ID o nombre del empleado..." autocomplete="off">
-                            <button class="btn btn-outline-secondary" type="button" id="btnDesplegar"
-                                    title="Mostrar todos los empleados">
-                                <i class="bi bi-chevron-down"></i>
-                            </button>
-                        </div>
-                        <div class="dropdown-menu suggestions-list" id="listaSugerencias"></div>
-                    </div>
-                    <button class="btn btn-primary" id="btnVerEmpleado">Ver</button>
+<div class="glass-card mb-4 p-4">
+    <div class="row g-3 align-items-end">
+        <div class="col">
+            <label class="form-label small text-secondary mb-1">
+                <i class="bi bi-search me-1"></i>Buscar empleado
+            </label>
+            <div class="d-flex gap-2">
+                <div class="search-wrap flex-grow-1">
+                    <i class="bi bi-person search-icon"></i>
+                    <input type="text" class="form-control search-input" id="inputBuscar"
+                           placeholder="ID o nombre del empleado..." autocomplete="off">
+                    <div class="suggestions-list" id="listaSugerencias"></div>
                 </div>
+                <button class="btn btn-modern btn-primary" id="btnVerEmpleado">
+                    <i class="bi bi-arrow-right"></i>
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<div id="seccionDetalle">
+<div id="seccionDetalle" class="fade-in">
     <div class="d-flex justify-content-between align-items-center mb-3">
-        <h4 class="mb-0" id="nombreEmpleado"></h4>
+        <h4 class="mb-0 fw-bold" id="nombreEmpleado" style="color: #fff;"></h4>
     </div>
 
-    <div class="card border-secondary mb-3">
-        <div class="card-body">
-            <div class="d-flex flex-wrap gap-2 mb-3" id="filtrosPredefinidos">
-                <button class="btn btn-outline-primary btn-sm" data-rango="hoy">Hoy</button>
-                <button class="btn btn-outline-primary btn-sm" data-rango="ayer">Ayer</button>
-                <button class="btn btn-outline-primary btn-sm" data-rango="esta_semana">Esta semana</button>
-                <button class="btn btn-outline-primary btn-sm" data-rango="semana_pasada">Semana pasada</button>
-                <button class="btn btn-outline-primary btn-sm active" data-rango="este_mes">Este mes</button>
-                <button class="btn btn-outline-primary btn-sm" data-rango="mes_pasado">Mes pasado</button>
-            </div>
-            <div class="row g-2 align-items-end">
-                <div class="col-auto">
-                    <label class="form-label small text-secondary">Desde</label>
-                    <input type="date" class="form-control form-control-sm" id="filtroDesde">
-                </div>
-                <div class="col-auto">
-                    <label class="form-label small text-secondary">Hasta</label>
-                    <input type="date" class="form-control form-control-sm" id="filtroHasta">
-                </div>
-                <div class="col-auto">
-                    <button class="btn btn-outline-info btn-sm" id="aplicarPersonalizado">Filtrar</button>
-                </div>
-                <div class="col-auto ms-auto">
-                    <button class="btn btn-success btn-sm" id="btnExportarEmpleado">
-                        <i class="bi bi-file-earmark-excel"></i> Exportar Excel
-                    </button>
-                </div>
-            </div>
+    <div class="glass-card mb-4 p-3">
+        <div class="d-flex flex-wrap gap-2 mb-3" id="filtrosPredefinidos">
+            <button class="btn-filter" data-rango="hoy">Hoy</button>
+            <button class="btn-filter" data-rango="ayer">Ayer</button>
+            <button class="btn-filter" data-rango="esta_semana">Esta semana</button>
+            <button class="btn-filter" data-rango="semana_pasada">Semana pasada</button>
+            <button class="btn-filter active" data-rango="este_mes">Este mes</button>
+            <button class="btn-filter" data-rango="mes_pasado">Mes pasado</button>
         </div>
-    </div>
-
-    <div class="row g-2 mb-3" id="tarjetasResumen">
-        <div class="col-md-4 col-6">
-            <div class="card border-primary text-center py-2 h-100">
-                <div class="card-body py-2">
-                    <div class="text-primary fw-bold fs-4" id="totalDias">—</div>
-                    <small class="text-secondary">Días</small>
-                </div>
+        <div class="row g-2 align-items-end">
+            <div class="col-auto">
+                <label class="form-label small text-secondary mb-1"><i class="bi bi-calendar me-1"></i>Desde</label>
+                <input type="date" class="form-control form-control-sm" id="filtroDesde" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #fff;">
             </div>
-        </div>
-        <div class="col-md-4 col-6">
-            <div class="card border-success text-center py-2 h-100">
-                <div class="card-body py-2">
-                    <div class="text-success fw-bold fs-4" id="totalHoras">—</div>
-                    <small class="text-secondary">Horas totales</small>
-                </div>
+            <div class="col-auto">
+                <label class="form-label small text-secondary mb-1"><i class="bi bi-calendar me-1"></i>Hasta</label>
+                <input type="date" class="form-control form-control-sm" id="filtroHasta" style="background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; color: #fff;">
             </div>
-        </div>
-        <div class="col-md-4 col-6">
-            <div class="card border-info text-center py-2 h-100">
-                <div class="card-body py-2">
-                    <div class="text-info fw-bold fs-4" id="promedioHoras">—</div>
-                    <small class="text-secondary">Promedio h/día</small>
-                </div>
+            <div class="col-auto">
+                <button class="btn btn-modern btn-outline-info btn-sm" id="aplicarPersonalizado">
+                    <i class="bi bi-funnel me-1"></i>Filtrar
+                </button>
+            </div>
+            <div class="col-auto ms-auto">
+                <button class="btn btn-modern btn-success btn-sm" id="btnExportarEmpleado">
+                    <i class="bi bi-file-earmark-excel me-1"></i>Exportar
+                </button>
             </div>
         </div>
     </div>
 
-    <div class="card border-secondary">
-        <div class="card-header bg-transparent border-secondary py-2 d-flex justify-content-between align-items-center">
-            <span class="small">Registros diarios</span>
-            <small class="text-secondary" id="etiquetaRango"></small>
+    <div class="row g-3 mb-4" id="tarjetasResumen">
+        <div class="col-md-4 col-6">
+            <div class="glass-card stat-card blue text-center p-3 h-100">
+                <div class="card-body py-2">
+                    <div class="stat-number fs-3" id="totalDias">—</div>
+                    <small style="color: rgba(255,255,255,0.5);">Días trabajados</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="glass-card stat-card green text-center p-3 h-100">
+                <div class="card-body py-2">
+                    <div class="stat-number fs-3" id="totalHoras">—</div>
+                    <small style="color: rgba(255,255,255,0.5);">Horas totales</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 col-6">
+            <div class="glass-card stat-card purple text-center p-3 h-100">
+                <div class="card-body py-2">
+                    <div class="stat-number fs-3" id="promedioHoras">—</div>
+                    <small style="color: rgba(255,255,255,0.5);">Promedio h/día</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="glass-card">
+        <div class="px-3 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid rgba(255,255,255,0.04);">
+            <span class="fw-semibold" style="color: rgba(255,255,255,0.8);"><i class="bi bi-calendar-week me-2"></i>Registros diarios</span>
+            <small style="color: rgba(255,255,255,0.35);" id="etiquetaRango"></small>
         </div>
         <div class="table-responsive">
-            <table class="table table-dark table-striped table-hover align-middle mb-0">
+            <table class="table table-modern align-middle mb-0">
                 <thead>
                     <tr>
                         <th>Fecha</th>
@@ -124,12 +105,14 @@
                         <th>Jornada inicio</th>
                         <th>Jornada fin</th>
                         <th>Jornada hrs</th>
-                        <th>Incidencia</th>
+                        <th>Inc.</th>
                     </tr>
                 </thead>
                 <tbody id="cuerpoDetalle">
                     <tr>
-                        <td colspan="8" class="text-secondary text-center py-3">Selecciona un empleado</td> 
+                        <td colspan="8" class="text-center py-4" style="color: rgba(255,255,255,0.3);">
+                            <i class="bi bi-search me-1"></i>Selecciona un empleado
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -180,17 +163,17 @@
     }
 
     function badgeHoras(valor) {
-        if (valor === null || valor === undefined) return '<span class="badge bg-warning text-dark">En curso</span>';
-        return '<span class="badge bg-info text-dark">' + formatearHoras(valor) + '</span>';
+        if (valor === null || valor === undefined) return '<span class="badge badge-modern bg-warning">En curso</span>';
+        return '<span class="badge badge-modern bg-info" style="color:#000;">' + formatearHoras(valor) + '</span>';
     }
 
     function incidenciaHtml(texto) {
-        return texto ? '<span class="badge bg-danger">' + texto + '</span>' : '';
+        return texto ? '<span class="badge badge-modern bg-danger">' + texto + '</span>' : '';
     }
 
     function cargarDetalle(empId, desde, hasta) {
         const tbody = $('#cuerpoDetalle');
-        tbody.innerHTML = '<tr><td colspan="8" class="text-secondary text-center py-3">Cargando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4" style="color: rgba(255,255,255,0.3);">Cargando...</td></tr>';
 
         const url = '/asistencia/api/empleado/' + empId + '/detalle/?desde=' + desde + '&hasta=' + hasta;
         fetch(url)
@@ -206,19 +189,19 @@
                 $('#totalHoras').textContent = formatearHoras(res.total_horas);
                 $('#promedioHoras').textContent = formatearHoras(res.promedio_horas);
                 if (!d.dias.length) {
-                    tbody.innerHTML = '<tr><td colspan="8" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-center py-4" style="color: rgba(255,255,255,0.3);">Sin registros en este período</td></tr>';
                     return;
                 }
                 tbody.innerHTML = d.dias.map(dia => {
                     const dObj = new Date(dia.fecha + 'T12:00:00');
                     const fechaStr = dObj.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
                     return '<tr>' +
-                        '<td class="text-nowrap">' + fechaStr + '</td>' +
-                        '<td>' + (dia.comida_inicio || '-') + '</td>' +
-                        '<td>' + (dia.comida_fin || '-') + '</td>' +
+                        '<td class="text-nowrap fw-medium">' + fechaStr + '</td>' +
+                        '<td style="font-feature-settings: \'tnum\';">' + (dia.comida_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
+                        '<td style="font-feature-settings: \'tnum\';">' + (dia.comida_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                         '<td>' + badgeHoras(dia.comida_horas) + '</td>' +
-                        '<td>' + (dia.jornada_inicio || '-') + '</td>' +
-                        '<td>' + (dia.jornada_fin || '-') + '</td>' +
+                        '<td style="font-feature-settings: \'tnum\';">' + (dia.jornada_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
+                        '<td style="font-feature-settings: \'tnum\';">' + (dia.jornada_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                         '<td>' + badgeHoras(dia.jornada_horas) + '</td>' +
                         '<td>' + incidenciaHtml(dia.incidencia) + '</td>' +
                         '</tr>';
@@ -231,7 +214,7 @@
 
     function mostrarEmpleado(empId, empNombre, empIdVisual) {
         empleadoActual = empId;
-        $('#nombreEmpleado').innerHTML = empNombre + ' <span class="badge bg-secondary font-monospace fs-6">' + empIdVisual + '</span>';
+        $('#nombreEmpleado').innerHTML = empNombre + ' <span class="badge badge-modern bg-secondary font-monospace" style="font-size:0.8rem;">' + empIdVisual + '</span>';
         const rango = obtenerRangoFecha('este_mes');
         $('#filtroDesde').value = rango.desde;
         $('#filtroHasta').value = rango.hasta;
@@ -264,7 +247,7 @@
             const item = document.createElement('button');
             item.type = 'button';
             item.className = 'dropdown-item' + (i === indiceSeleccionado ? ' active' : '');
-            item.textContent = e.id_visual + ' — ' + e.nombre;
+            item.innerHTML = '<span class="fw-semibold" style="color:' + (i === indiceSeleccionado ? '#00d4ff' : 'rgba(255,255,255,0.5)') + ';">' + e.id_visual + '</span> <span class="text-secondary">—</span> ' + e.nombre;
             item.dataset.id = e.id;
             item.dataset.nombre = e.nombre;
             item.dataset.idVisual = e.id_visual;
@@ -338,12 +321,12 @@
         .then(function (d) { empleados = d.empleados || []; });
 
     /* ========== Filtros predefinidos ========== */
-    document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (btn) {
+    document.querySelectorAll('#filtrosPredefinidos .btn-filter').forEach(function (btn) {
         btn.addEventListener('click', function () {
             if (!empleadoActual) return;
             const rango = obtenerRangoFecha(this.dataset.rango);
             if (!rango) return;
-            document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (b) { b.classList.remove('active'); });
+            document.querySelectorAll('#filtrosPredefinidos .btn-filter').forEach(function (b) { b.classList.remove('active'); });
             this.classList.add('active');
             $('#filtroDesde').value = rango.desde;
             $('#filtroHasta').value = rango.hasta;
@@ -356,7 +339,7 @@
         const desde = $('#filtroDesde').value;
         const hasta = $('#filtroHasta').value;
         if (!desde || !hasta) return;
-        document.querySelectorAll('#filtrosPredefinidos .btn').forEach(function (b) { b.classList.remove('active'); });
+        document.querySelectorAll('#filtrosPredefinidos .btn-filter').forEach(function (b) { b.classList.remove('active'); });
         cargarDetalle(empleadoActual, desde, hasta);
     });
 
