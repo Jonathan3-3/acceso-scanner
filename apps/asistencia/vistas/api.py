@@ -259,9 +259,13 @@ def _escribir_excel_general(worksheet, grupos_empleados, columnas, titulo=None):
                 'ID': r['empleado_id'],
                 'Nombre': r['nombre'],
                 'Fecha': r['fecha'],
-                'Entrada': r['entrada'],
-                'Salida': r['salida'] if r.get('salida') else '-',
-                'Horas': r['horas'] if r['horas'] is not None else 'En curso',
+                'Comida inicio': r['comida_inicio'],
+                'Comida fin': r['comida_fin'],
+                'Comida hrs': r['comida_horas'],
+                'Jornada inicio': r['jornada_inicio'],
+                'Jornada fin': r['jornada_fin'],
+                'Jornada hrs': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r['comida_fin'] else ''),
+                'Incidencia': r.get('incidencia', ''),
             }
             for col_idx, key in enumerate(columnas, 1):
                 valor = valores.get(key, '')
@@ -299,25 +303,27 @@ def _escribir_excel_individual(worksheet, datos_detalle, empleado, titulo=None):
     blanco_font = Font(name='Calibri', bold=True, color='FFFFFF', size=11)
     info_font = Font(name='Calibri', bold=True, size=12)
 
+    num_cols = 8
     if titulo:
-        _escribir_titulo(ws, "Reporte", 4)
+        _escribir_titulo(ws, "Reporte", num_cols)
         ws.row_dimensions[2].height = 8
         fila = 3
 
     if empleado:
-        ws.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=4)
+        ws.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=num_cols)
         celda = ws.cell(row=fila, column=1, value=f"{empleado.id_visual} — {empleado.nombre}")
         celda.font = info_font
         celda.fill = azul_fill
         celda.font = Font(name='Calibri', bold=True, color='FFFFFF', size=12)
         celda.alignment = Alignment(horizontal='left', vertical='center')
-        for c in range(1, 5):
+        for c in range(1, num_cols + 1):
             ws.cell(row=fila, column=c).border = est['borde']
             ws.cell(row=fila, column=c).fill = azul_fill
         ws.row_dimensions[fila].height = 24
         fila += 1
 
-    columnas = ['Fecha', 'Entrada', 'Salida', 'Horas']
+    columnas = ['Fecha', 'Comida inicio', 'Comida fin', 'Comida hrs', 'Jornada inicio', 'Jornada fin', 'Jornada hrs', 'Incidencia']
+    num_cols = len(columnas)
     for i, col_name in enumerate(columnas, 1):
         celda = ws.cell(row=fila, column=i, value=col_name)
         celda.font = est['encabezado_font']
@@ -329,9 +335,13 @@ def _escribir_excel_individual(worksheet, datos_detalle, empleado, titulo=None):
     for idx, fila_data in enumerate(datos_detalle):
         valores = [
             fila_data['Fecha'],
-            fila_data['Entrada'],
-            fila_data['Salida'],
-            fila_data['Horas'],
+            fila_data.get('comida_inicio', ''),
+            fila_data.get('comida_fin', ''),
+            fila_data.get('comida_horas', ''),
+            fila_data.get('jornada_inicio', ''),
+            fila_data.get('jornada_fin', ''),
+            fila_data.get('jornada_horas', ''),
+            fila_data.get('incidencia', ''),
         ]
         for col_idx, valor in enumerate(valores, 1):
             if isinstance(valor, float):
@@ -346,12 +356,12 @@ def _escribir_excel_individual(worksheet, datos_detalle, empleado, titulo=None):
                 celda.fill = est['fila_par_fill']
         fila += 1
 
-    for i in range(1, 5):
+    for i in range(1, num_cols + 1):
         ancho = max(14, min(40, 14))
         ws.column_dimensions[get_column_letter(i)].width = ancho + 2
 
     if fila > inicio:
-        ws.auto_filter.ref = f"A{inicio}:D{fila - 1}"
+        ws.auto_filter.ref = f"A{inicio}:{get_column_letter(num_cols)}{fila - 1}"
     ws.freeze_panes = f"A{inicio + 1}"
 
 
@@ -422,16 +432,20 @@ def exportar_reporte_excel(request):
     else:
         titulo = f"Reporte de Asistencia {letrero_fecha}{nombre_emp}"
 
-    columnas_detalle = ['ID', 'Nombre', 'Fecha', 'Entrada', 'Salida', 'Horas']
+    columnas_detalle = ['ID', 'Nombre', 'Fecha', 'Comida inicio', 'Comida fin', 'Comida hrs', 'Jornada inicio', 'Jornada fin', 'Jornada hrs', 'Incidencia']
     datos_detalle = []
     for r in resultados:
         datos_detalle.append({
             'ID': r['empleado_id'],
             'Nombre': r['nombre'],
             'Fecha': r['fecha'],
-            'Entrada': r['entrada'],
-            'Salida': r['salida'],
-            'Horas': r['horas'] if r['horas'] is not None else 'En curso',
+            'comida_inicio': r['comida_inicio'],
+            'comida_fin': r['comida_fin'],
+            'comida_horas': r['comida_horas'],
+            'jornada_inicio': r['jornada_inicio'],
+            'jornada_fin': r['jornada_fin'],
+            'jornada_horas': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r['comida_fin'] else ''),
+            'incidencia': r.get('incidencia', ''),
         })
 
     ws1 = wb.active
@@ -468,14 +482,15 @@ def exportar_reporte_excel(request):
 
     if not empleado_pk and totales:
         ws2 = wb.create_sheet('Resumen')
-        cols_resumen = ['ID', 'Nombre', 'Días trabajados', 'Total horas']
+        cols_resumen = ['ID', 'Nombre', 'Días trabajados', 'Total comida', 'Total jornada']
         datos_resumen = []
         for t in totales:
             datos_resumen.append({
                 'ID': t['empleado_id'],
                 'Nombre': t['nombre'],
                 'Días trabajados': t['dias'],
-                'Total horas': t['total_horas'],
+                'Total comida': t['total_comida'],
+                'Total jornada': t['total_jornada'],
             })
         _escribir_excel(ws2, datos_resumen, cols_resumen, titulo)
 
@@ -554,39 +569,31 @@ def detalle_empleado_api(request, pk):
         marcado_en__lte=hasta_dt,
     ).order_by('marcado_en').select_related('empleado')
 
-    hoy_local = timezone.localtime(timezone.now()).date()
+    datos = [(r.empleado, r.marcado_en, r.datos_originales) for r in registros]
+    resultados, _ = calcular_reporte(datos)
 
-    grupos = defaultdict(list)
-    for r in registros:
-        dt_local = timezone.localtime(r.marcado_en)
-        grupos[dt_local.date()].append(dt_local)
+    total_comida = 0
+    total_jornada = 0
+    for r in resultados:
+        if r['comida_horas'] is not None:
+            total_comida += r['comida_horas']
+        if r['jornada_horas'] is not None:
+            total_jornada += r['jornada_horas']
 
     dias = []
-    total_segundos = 0
-    for dia in sorted(grupos.keys()):
-        horas = sorted(grupos[dia])
-        primera = horas[0]
-        ultima = horas[-1]
-
-        es_hoy = dia == hoy_local
-        if es_hoy:
-            segs = 0
-            mostrar_horas = None
-            mostrar_salida = ultima.strftime('%H:%M:%S') if len(horas) > 1 else '-'
-        else:
-            segs = (ultima - primera).total_seconds()
-            total_segundos += segs
-            mostrar_horas = round(segs / 3600, 2)
-            mostrar_salida = ultima.strftime('%H:%M:%S')
-
+    for r in resultados:
         dias.append({
-            'fecha': dia.isoformat(),
-            'entrada': primera.strftime('%H:%M:%S'),
-            'salida': mostrar_salida,
-            'horas': mostrar_horas,
+            'fecha': r['fecha'],
+            'comida_inicio': r['comida_inicio'],
+            'comida_fin': r['comida_fin'],
+            'comida_horas': r['comida_horas'],
+            'jornada_inicio': r['jornada_inicio'],
+            'jornada_fin': r['jornada_fin'],
+            'jornada_horas': r['jornada_horas'],
+            'incidencia': r.get('incidencia', ''),
         })
 
-    total_horas = round(total_segundos / 3600, 2)
+    total_horas = round(total_comida + total_jornada, 2)
     promedio_horas = round(total_horas / len(dias), 2) if dias else 0
 
     return JsonResponse({
@@ -600,6 +607,8 @@ def detalle_empleado_api(request, pk):
         'dias': dias,
         'resumen': {
             'total_dias': len(dias),
+            'total_comida': round(total_comida, 2),
+            'total_jornada': round(total_jornada, 2),
             'total_horas': total_horas,
             'promedio_horas': promedio_horas,
         },

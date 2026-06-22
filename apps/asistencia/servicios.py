@@ -61,6 +61,23 @@ def convertir_local(dt):
     return dt
 
 
+TOLERANCIA_COMIDA_SEGS = 4200  # 1h10min
+
+
+def _formatear_hms(dt):
+    return dt.strftime('%H:%M:%S') if dt is not None else None
+
+
+def _segundos_a_horas(segundos):
+    return round(segundos / 3600, 2) if segundos is not None else None
+
+
+def _incidencia_comida(c_horas_segs):
+    if c_horas_segs is not None and c_horas_segs > TOLERANCIA_COMIDA_SEGS:
+        return 'Excedió comida'
+    return ''
+
+
 def calcular_reporte(registros):
     grupos = defaultdict(list)
 
@@ -69,7 +86,8 @@ def calcular_reporte(registros):
         grupos[(emp.id, dt_local.date())].append(dt_local)
 
     resultados = []
-    totales_empleado = defaultdict(float)
+    totales_jornada = defaultdict(float)
+    totales_comida = defaultdict(float)
     fechas_empleado = defaultdict(set)
     hoy_local = timezone.localtime(timezone.now()).date()
 
@@ -78,39 +96,62 @@ def calcular_reporte(registros):
 
     for (emp_id, fecha), horas in grupos.items():
         horas.sort()
-        primera = horas[0]
-        ultima = horas[-1]
         empleado = mapa_empleados[emp_id]
-
         es_hoy = fecha == hoy_local
-        if es_hoy:
-            total_horas = None
+        n = len(horas)
+
+        c_inicio = horas[0]
+        c_fin = horas[1] if n >= 2 else None
+        j_inicio = c_fin
+        j_fin = horas[-1] if n >= 3 else None
+
+        if n == 1:
+            c_horas = None; c_segs = None; j_horas = None
+        elif n == 2:
+            c_segs = (c_fin - c_inicio).total_seconds()
+            c_horas = _segundos_a_horas(c_segs)
+            totales_comida[emp_id] += c_horas
+            j_horas = None
+        elif es_hoy:
+            c_segs = (c_fin - c_inicio).total_seconds()
+            c_horas = _segundos_a_horas(c_segs)
+            totales_comida[emp_id] += c_horas
+            j_horas = None
         else:
-            total_horas = round((ultima - primera).total_seconds() / 3600, 2)
-            totales_empleado[emp_id] += total_horas
+            c_segs = (c_fin - c_inicio).total_seconds()
+            c_horas = _segundos_a_horas(c_segs)
+            j_horas = _segundos_a_horas((j_fin - j_inicio).total_seconds())
+            totales_comida[emp_id] += c_horas
+            totales_jornada[emp_id] += j_horas
 
         resultados.append({
             'empleado_id': empleado.id_visual,
             'empleado_pk': empleado.pk,
             'nombre': empleado.nombre,
             'fecha': fecha.isoformat(),
-            'entrada': primera.strftime('%H:%M:%S'),
-            'salida': ultima.strftime('%H:%M:%S'),
-            'horas': total_horas,
+            'comida_inicio': _formatear_hms(c_inicio),
+            'comida_fin': _formatear_hms(c_fin),
+            'comida_horas': c_horas,
+            'jornada_inicio': _formatear_hms(j_inicio),
+            'jornada_fin': _formatear_hms(j_fin),
+            'jornada_horas': j_horas,
+            'incidencia': _incidencia_comida(c_segs) if n >= 2 else '',
         })
 
         fechas_empleado[emp_id].add(fecha)
 
+    todos_ids = set(totales_jornada.keys()) | set(totales_comida.keys())
     totales = []
-    for emp_id, total_horas in sorted(totales_empleado.items()):
+    for emp_id in sorted(todos_ids):
         empleado = mapa_empleados[emp_id]
         totales.append({
             'empleado_id': empleado.id_visual,
             'empleado_pk': empleado.pk,
             'nombre': empleado.nombre,
             'dias': len(fechas_empleado[emp_id]),
-            'fechas': sorted(d.isoformat() for d in fechas_empleado[emp_id]),
-            'total_horas': round(total_horas, 2),
+            'fechas': sorted(f.isoformat() for f in fechas_empleado[emp_id]),
+            'total_comida': round(totales_comida.get(emp_id, 0), 2),
+            'total_jornada': round(totales_jornada.get(emp_id, 0), 2),
         })
 
     return resultados, totales

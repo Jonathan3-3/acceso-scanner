@@ -50,14 +50,18 @@
                     <th>ID</th>
                     <th>Nombre</th>
                     <th>Fecha</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Horas</th>
+                    <th>Comida in</th>
+                    <th>Comida fin</th>
+                    <th>Comida hrs</th>
+                    <th>Jornada in</th>
+                    <th>Jornada fin</th>
+                    <th>Jornada hrs</th>
+                    <th>Inc.</th>
                 </tr>
             </thead>
             <tbody id="cuerpoGeneral">
                 <tr>
-                    <td colspan="6" class="text-secondary text-center py-3">
+                    <td colspan="10" class="text-secondary text-center py-3">
                         Selecciona un rango de fechas
                     </td>
                 </tr>
@@ -112,6 +116,11 @@
         }
     }
 
+    function badgeHoras(valor) {
+        if (valor === null || valor === undefined) return '<span class="badge bg-warning text-dark">En curso</span>';
+        return '<span class="badge bg-info text-dark">' + formatearHoras(valor) + '</span>';
+    }
+
     function agruparPorEmpleado(resultados) {
         if (!resultados || !resultados.length) return [];
         var grupos = {};
@@ -122,12 +131,14 @@
                     empleado_id: r.empleado_id,
                     empleado_pk: r.empleado_pk,
                     nombre: r.nombre,
-                    total_horas: 0,
+                    total_comida: 0,
+                    total_jornada: 0,
                     registros: []
                 };
             }
             grupos[key].registros.push(r);
-            if (r.horas !== null) grupos[key].total_horas += r.horas;
+            if (r.comida_horas !== null) grupos[key].total_comida += r.comida_horas;
+            if (r.jornada_horas !== null) grupos[key].total_jornada += r.jornada_horas;
         });
         var resultado = [];
         Object.keys(grupos).forEach(function (k) {
@@ -143,56 +154,59 @@
         ultimoDesde = desde;
         ultimoHasta = hasta;
         const tbody = $('#cuerpoGeneral');
-        tbody.innerHTML = '<tr><td colspan="6" class="text-secondary text-center py-3">Cargando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-secondary text-center py-3">Cargando...</td></tr>';
 
         fetch('/asistencia/api/reporte/?desde=' + desde + '&hasta=' + hasta)
             .then(r => r.json())
             .then(d => {
                 if (d.error) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">' + d.error + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-danger text-center py-3">' + d.error + '</td></tr>';
                     return;
                 }
 
                 if (!d.resultados || !d.resultados.length) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="10" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
                     return;
                 }
 
                 var grupos = agruparPorEmpleado(d.resultados);
                 var info = $('#infoGeneral');
                 var totalEmp = grupos.length;
-                var totalHoras = grupos.reduce(function (s, g) { return s + g.total_horas; }, 0);
-                info.textContent = totalEmp + ' empleado(s) · ' + formatearHoras(totalHoras) + ' total';
+                var totalH = grupos.reduce(function (s, g) { return s + g.total_comida + g.total_jornada; }, 0);
+                info.textContent = totalEmp + ' empleado(s) · ' + formatearHoras(totalH) + ' total';
 
                 var html = '';
                 grupos.forEach(function (g, idx) {
                     var badgeClass = 'bg-' + (idx % 2 === 0 ? 'secondary' : 'info');
+                    var gTotal = formatearHoras(g.total_comida + g.total_jornada);
                     html += '<tr class="table-active">' +
-                        '<td colspan="6" class="py-2">' +
+                        '<td colspan="10" class="py-2">' +
                         '<span class="badge ' + badgeClass + ' font-monospace me-2">' + g.empleado_id + '</span> ' +
                         '<strong>' + g.nombre + '</strong> ' +
-                        '<span class="text-secondary small ms-2">' + g.registros.length + ' registro(s) · ' + formatearHoras(g.total_horas) + '</span>' +
+                        '<span class="text-secondary small ms-2">' + g.registros.length + ' registro(s) · ' + gTotal + '</span>' +
                         '</td></tr>';
                     g.registros.forEach(function (r) {
-                        var entrada = '<strong>' + r.entrada + '</strong>';
-                        var salida = r.salida || '-';
-                        var horas = r.horas !== null
-                            ? '<span class="badge bg-info text-dark">' + formatearHoras(r.horas) + '</span>'
-                            : '<span class="badge bg-warning text-dark">En curso</span>';
+                        var inc = r.incidencia
+                            ? '<span class="badge bg-danger">' + r.incidencia + '</span>'
+                            : '';
                         html += '<tr>' +
                             '<td></td>' +
                             '<td></td>' +
                             '<td class="text-nowrap small">' + formatearFecha(r.fecha) + '</td>' +
-                            '<td>' + entrada + '</td>' +
-                            '<td>' + salida + '</td>' +
-                            '<td>' + horas + '</td>' +
+                            '<td>' + (r.comida_inicio || '-') + '</td>' +
+                            '<td>' + (r.comida_fin || '-') + '</td>' +
+                            '<td>' + badgeHoras(r.comida_horas) + '</td>' +
+                            '<td>' + (r.jornada_inicio || '-') + '</td>' +
+                            '<td>' + (r.jornada_fin || '-') + '</td>' +
+                            '<td>' + badgeHoras(r.jornada_horas) + '</td>' +
+                            '<td>' + inc + '</td>' +
                             '</tr>';
                     });
                 });
                 tbody.innerHTML = html;
             })
             .catch(function () {
-                tbody.innerHTML = '<tr><td colspan="6" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="10" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
             });
     }
 

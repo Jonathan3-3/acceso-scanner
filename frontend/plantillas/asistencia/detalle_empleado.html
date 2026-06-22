@@ -80,14 +80,18 @@
             <thead>
                 <tr>
                     <th>Fecha</th>
-                    <th>Entrada</th>
-                    <th>Salida</th>
-                    <th>Horas</th>
+                    <th>Comida inicio</th>
+                    <th>Comida fin</th>
+                    <th>Comida hrs</th>
+                    <th>Jornada inicio</th>
+                    <th>Jornada fin</th>
+                    <th>Jornada hrs</th>
+                    <th>Incidencia</th>
                 </tr>
             </thead>
             <tbody id="cuerpoDetalle">
                 <tr>
-                    <td colspan="4" class="text-secondary text-center py-3">Cargando...</td>
+                    <td colspan="8" class="text-secondary text-center py-3">Cargando...</td>
                 </tr>
             </tbody>
         </table>
@@ -156,16 +160,25 @@
         }
     }
 
+    function badgeHoras(valor) {
+        if (valor === null || valor === undefined) return '<span class="badge bg-warning text-dark">En curso</span>';
+        return '<span class="badge bg-info text-dark">' + formatearHoras(valor) + '</span>';
+    }
+
+    function incidenciaHtml(texto) {
+        return texto ? '<span class="badge bg-danger">' + texto + '</span>' : '';
+    }
+
     function cargarDatos(desde, hasta) {
         const tbody = $('#cuerpoDetalle');
-        tbody.innerHTML = '<tr><td colspan="4" class="text-secondary text-center py-3">Cargando...</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-secondary text-center py-3">Cargando...</td></tr>';
 
         const url = '/asistencia/api/empleado/' + ID_EMPLEADO + '/detalle/?desde=' + desde + '&hasta=' + hasta;
         fetch(url)
             .then(r => r.json())
             .then(d => {
                 if (d.error) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-3">' + d.error + '</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center py-3">' + d.error + '</td></tr>';
                     return;
                 }
 
@@ -177,29 +190,27 @@
                 $('#promedioHoras').textContent = formatearHoras(res.promedio_horas);
 
                 if (!d.dias.length) {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" class="text-secondary text-center py-3">Sin registros en este período</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = d.dias.map(dia => {
                     const dObj = new Date(dia.fecha + 'T12:00:00');
                     const fechaStr = dObj.toLocaleDateString('es-MX', { weekday: 'short', day: 'numeric', month: 'short' });
-                    const horasHtml = dia.horas !== null
-                        ? '<span class="badge bg-info text-dark">' + formatearHoras(dia.horas) + '</span>'
-                        : '<span class="badge bg-warning text-dark">En curso</span>';
-                    const salidaHtml = dia.salida === '-'
-                        ? '<span class="text-secondary">-</span>'
-                        : '<strong>' + dia.salida + '</strong>';
                     return '<tr>' +
                         '<td class="text-nowrap">' + fechaStr + '</td>' +
-                        '<td><strong>' + dia.entrada + '</strong></td>' +
-                        '<td>' + salidaHtml + '</td>' +
-                        '<td>' + horasHtml + '</td>' +
+                        '<td>' + (dia.comida_inicio || '-') + '</td>' +
+                        '<td>' + (dia.comida_fin || '-') + '</td>' +
+                        '<td>' + badgeHoras(dia.comida_horas) + '</td>' +
+                        '<td>' + (dia.jornada_inicio || '-') + '</td>' +
+                        '<td>' + (dia.jornada_fin || '-') + '</td>' +
+                        '<td>' + badgeHoras(dia.jornada_horas) + '</td>' +
+                        '<td>' + incidenciaHtml(dia.incidencia) + '</td>' +
                         '</tr>';
                 }).join('');
             })
             .catch(() => {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="text-danger text-center py-3">Error al cargar datos</td></tr>';
             });
     }
 
