@@ -80,7 +80,7 @@
             </div>
         </div>
         <div class="col-md-4 col-6">
-            <div class="glass-card stat-card purple text-center p-3 h-100">
+            <div class="glass-card stat-card slate text-center p-3 h-100">
                 <div class="card-body py-2">
                     <div class="stat-number fs-3" id="promedioHoras">—</div>
                     <small style="color: rgba(255,255,255,0.5);">Promedio h/día</small>
@@ -297,14 +297,6 @@
     }
 
     input.addEventListener('focus', mostrarTodos);
-
-    $('#btnDesplegar').addEventListener('click', function () {
-        if (lista.classList.contains('show')) {
-            ocultarSugerencias();
-        } else {
-            mostrarTodos();
-        }
-    });
 
     $('#btnVerEmpleado').addEventListener('click', function () {
         const items = lista.querySelectorAll('.dropdown-item');
