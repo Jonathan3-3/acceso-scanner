@@ -1,10 +1,20 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-load_dotenv(BASE_DIR / '.env')
+_archivo_env = BASE_DIR / '.env'
+if _archivo_env.exists():
+    with open(_archivo_env, encoding='utf-8') as _f:
+        for _linea in _f:
+            _linea = _linea.strip()
+            if not _linea or _linea.startswith('#') or '=' not in _linea:
+                continue
+            _clave, _, _valor = _linea.partition('=')
+            _clave = _clave.strip()
+            _valor = _valor.strip().strip('"').strip("'")
+            if _clave and _clave not in os.environ:
+                os.environ[_clave] = _valor
 
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key-change-in-production')
 
