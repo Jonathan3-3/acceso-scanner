@@ -9,6 +9,8 @@ from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
 
+from django.conf import settings
+
 from ..models import RegistroAcceso
 from ..servicios import procesar_archivo_dat, emparejar_empleados, calcular_reporte, obtener_empleados_sin_registro
 from apps.empleados.models import Empleado
@@ -707,4 +709,28 @@ def subir_archivo(request):
         'sin_registro': sin_registro,
         'total_empleados': len(totales),
         'total_registros': len(emparejados),
+    })
+
+
+@csrf_exempt
+def limpiar_registros(request):
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Usa POST'}, status=405)
+
+    import json
+    try:
+        data = json.loads(request.body)
+        password = data.get('password', '')
+    except (json.JSONDecodeError, AttributeError):
+        return JsonResponse({'error': 'Body inválido'}, status=400)
+
+    if password != settings.CLEANUP_PASSWORD:
+        return JsonResponse({'error': 'Contraseña incorrecta'}, status=403)
+
+    eliminados, _ = RegistroAcceso.objects.all().delete()
+
+    return JsonResponse({
+        'ok': True,
+        'eliminados': eliminados,
+        'mensaje': f'Se eliminaron {eliminados} registros de asistencia'
     })

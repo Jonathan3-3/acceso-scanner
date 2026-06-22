@@ -16,6 +16,7 @@ urlpatterns = [
     path('empleado/<int:pk>/', vistas.detalle_empleado, name='detalle-empleado'),
     path('api/fechas-disponibles/', vistas.fechas_disponibles, name='fechas-disponibles'),
     path('api/registros-por-fecha/', vistas.registros_por_fecha, name='registros-por-fecha'),
+    path('api/limpiar-registros/', vistas.limpiar_registros, name='limpiar-registros'),
     path('api/sincronizar-dispositivo/', vistas.sincronizar_dispositivo, name='sincronizar-dispositivo'),
     path('iclock/cdata', cdata, name='push-cdata'),
     path('iclock/getrequest', obtener_solicitud, name='push-getrequest'),

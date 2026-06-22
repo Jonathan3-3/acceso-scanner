@@ -89,6 +89,7 @@ PUERTO_DISPOSITIVO = int(os.environ.get('FCX_PUERTO', '4370'))
 CLAVE_DISPOSITIVO = int(os.environ.get('FCX_CLAVE', '0'))
 TIMEOUT_DISPOSITIVO = int(os.environ.get('FCX_TIMEOUT', '30'))
 SERIAL_DISPOSITIVO = os.environ.get('FCX_SERIAL', 'AEYU194660027')
+CLEANUP_PASSWORD = os.environ.get('CLEANUP_PASSWORD', 'G@RR0M.ADMIN')
 
 import logging.config
 LOGGING = {

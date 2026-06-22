@@ -63,6 +63,9 @@
                 <button class="btn btn-modern btn-outline-info w-100 mt-2" onclick="sincronizarAhora()">
                     <i class="bi bi-arrow-repeat me-1"></i>Sincronizar ahora
                 </button>
+                <button class="btn btn-modern btn-outline-danger w-100 mt-1" onclick="limpiarRegistros()">
+                    <i class="bi bi-trash me-1"></i>Limpiar registros
+                </button>
             </div>
         </div>
     </div>
@@ -115,4 +118,41 @@
     </div>
 </div>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function limpiarRegistros() {
+    if (!confirm('\u00bfEst\u00e1s seguro? Se eliminar\u00e1n TODOS los registros de asistencia.\nLos empleados no se borran.')) return;
+
+    const password = prompt('Ingresa la contrase\u00f1a de administrador:');
+    if (!password) return;
+
+    const btn = document.querySelector('.btn-outline-danger');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="bi bi-hourglass me-1"></i>Eliminando...';
+
+    fetch('/asistencia/api/limpiar-registros/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password }),
+    })
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) {
+            alert('Error: ' + d.error);
+        } else {
+            alert(d.mensaje);
+            location.reload();
+        }
+    })
+    .catch(() => {
+        alert('Error de conexi\u00f3n');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash me-1"></i>Limpiar registros';
+    });
+}
+</script>
 {% endblock %}
