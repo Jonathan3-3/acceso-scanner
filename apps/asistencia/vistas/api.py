@@ -471,8 +471,10 @@ def exportar_reporte_excel(request):
                     'registros': [],
                 }
             agrupados[key]['registros'].append(r)
-            if r['horas'] is not None:
-                agrupados[key]['total_horas'] += r['horas']
+            if r['jornada_horas'] is not None:
+                agrupados[key]['total_horas'] += r['jornada_horas']
+            if r['comida_horas'] is not None:
+                agrupados[key]['total_horas'] += r['comida_horas']
         for k in agrupados:
             agrupados[k]['registros'].sort(key=lambda x: x['fecha'])
         items = sorted(agrupados.values(), key=lambda x: x['nombre'])
