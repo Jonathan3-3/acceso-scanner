@@ -30,3 +30,6 @@ backup_datos.json
 datos.json
 datos_final.json
 datos_utf8.json
+
+# Docs (local only)
+README.md

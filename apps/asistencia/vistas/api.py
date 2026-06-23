@@ -12,6 +12,10 @@ from openpyxl.utils import get_column_letter
 from django.conf import settings
 
 from ..models import RegistroAcceso
+
+_intentos_fallidos = defaultdict(list)
+_MAX_INTENTOS = 3
+_BLOQUEO_SEGUNDOS = 900
 from ..servicios import procesar_archivo_dat, emparejar_empleados, calcular_reporte, obtener_empleados_sin_registro
 from apps.empleados.models import Empleado
 
@@ -717,6 +721,15 @@ def limpiar_registros(request):
     if request.method != 'POST':
         return JsonResponse({'error': 'Usa POST'}, status=405)
 
+    ip = request.META.get('REMOTE_ADDR', 'unknown')
+    ahora = timezone.now()
+    _intentos_fallidos[ip] = [t for t in _intentos_fallidos[ip] if (ahora - t).total_seconds() < _BLOQUEO_SEGUNDOS]
+
+    if len(_intentos_fallidos[ip]) >= _MAX_INTENTOS:
+        return JsonResponse({
+            'error': 'Demasiados intentos. Espera 15 minutos.'
+        }, status=429)
+
     import json
     try:
         data = json.loads(request.body)
@@ -725,8 +738,13 @@ def limpiar_registros(request):
         return JsonResponse({'error': 'Body inválido'}, status=400)
 
     if password != settings.CLEANUP_PASSWORD:
-        return JsonResponse({'error': 'Contraseña incorrecta'}, status=403)
+        _intentos_fallidos[ip].append(ahora)
+        restantes = _MAX_INTENTOS - len(_intentos_fallidos[ip])
+        return JsonResponse({
+            'error': f'Contraseña incorrecta. {restantes} intento(s) restante(s).'
+        }, status=403)
 
+    _intentos_fallidos[ip].clear()
     eliminados, _ = RegistroAcceso.objects.all().delete()
 
     return JsonResponse({
