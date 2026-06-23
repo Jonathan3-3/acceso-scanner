@@ -76,6 +76,11 @@ DATABASES = {
     }
 }
 
+# Security
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # HTTP local
+X_FRAME_OPTIONS = 'DENY'
+SECURE_CONTENT_TYPE_NOSNIFF = True
+
 LANGUAGE_CODE = 'es-mx'
 TIME_ZONE = 'America/Mexico_City'
 USE_I18N = True
