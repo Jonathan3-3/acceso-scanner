@@ -747,8 +747,27 @@ def limpiar_registros(request):
     _intentos_fallidos[ip].clear()
     eliminados, _ = RegistroAcceso.objects.all().delete()
 
+    dispositivo_ok = True
+    try:
+        from zk import ZK
+        zk = ZK(settings.IP_DISPOSITIVO, port=settings.PUERTO_DISPOSITIVO,
+                timeout=10, password=settings.CLAVE_DISPOSITIVO)
+        conn = zk.connect()
+        conn.clear_attendance()
+        conn.disconnect()
+        zk.disconnect()
+    except Exception:
+        dispositivo_ok = False
+
     return JsonResponse({
         'ok': True,
         'eliminados': eliminados,
-        'mensaje': f'Se eliminaron {eliminados} registros de asistencia'
+        'dispositivo_limpiado': dispositivo_ok,
+        'mensaje': (
+            f'Se eliminaron {eliminados} registros de la BD.'
+            if dispositivo_ok else
+            f'Se eliminaron {eliminados} registros de la BD, '
+            'pero no se pudo limpiar el FCX. '
+            'Sincroniza manualmente para evitar que reaparezcan.'
+        ),
     })
