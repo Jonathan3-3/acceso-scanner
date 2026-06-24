@@ -136,6 +136,8 @@ def calcular_reporte(registros):
             'jornada_fin': _formatear_hms(j_fin),
             'jornada_horas': j_horas,
             'incidencia': _incidencia_comida(c_segs) if n >= 2 else '',
+            'es_hoy': es_hoy,
+            'n_marcas': n,
         })
 
         fechas_empleado[emp_id].add(fecha)

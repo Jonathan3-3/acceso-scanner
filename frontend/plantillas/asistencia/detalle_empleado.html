@@ -145,8 +145,11 @@
         }
     }
 
-    function badgeHoras(valor) {
-        if (valor === null || valor === undefined) return '<span class="badge badge-modern bg-warning">En curso</span>';
+    function badgeHoras(valor, es_hoy) {
+        if (valor === null || valor === undefined) {
+            if (es_hoy) return '<span class="badge badge-modern bg-warning">En curso</span>';
+            return '<span class="badge badge-modern bg-secondary">Incompleto</span>';
+        }
         return '<span class="badge badge-modern bg-info" style="color:#000;">' + formatearHoras(valor) + '</span>';
     }
 
@@ -186,10 +189,10 @@
                         '<td class="text-nowrap fw-medium">' + fechaStr + '</td>' +
                         '<td style="font-feature-settings: \'tnum\';">' + (dia.comida_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                         '<td style="font-feature-settings: \'tnum\';">' + (dia.comida_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
-                        '<td>' + badgeHoras(dia.comida_horas) + '</td>' +
+                        '<td>' + badgeHoras(dia.comida_horas, dia.es_hoy) + '</td>' +
                         '<td style="font-feature-settings: \'tnum\';">' + (dia.jornada_inicio || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
                         '<td style="font-feature-settings: \'tnum\';">' + (dia.jornada_fin || '<span style="color:rgba(255,255,255,0.2);">—</span>') + '</td>' +
-                        '<td>' + badgeHoras(dia.jornada_horas) + '</td>' +
+                        '<td>' + badgeHoras(dia.jornada_horas, dia.es_hoy) + '</td>' +
                         '<td>' + incidenciaHtml(dia.incidencia) + '</td>' +
                         '</tr>';
                 }).join('');

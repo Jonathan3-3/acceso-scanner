@@ -270,7 +270,7 @@ def _escribir_excel_general(worksheet, grupos_empleados, columnas, titulo=None):
                 'Comida hrs': r['comida_horas'],
                 'Jornada inicio': r['jornada_inicio'],
                 'Jornada fin': r['jornada_fin'],
-                'Jornada hrs': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r['comida_fin'] else ''),
+                'Jornada hrs': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r.get('es_hoy') else ''),
                 'Incidencia': r.get('incidencia', ''),
             }
             for col_idx, key in enumerate(columnas, 1):
@@ -450,7 +450,7 @@ def exportar_reporte_excel(request):
             'comida_horas': r['comida_horas'],
             'jornada_inicio': r['jornada_inicio'],
             'jornada_fin': r['jornada_fin'],
-            'jornada_horas': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r['comida_fin'] else ''),
+            'jornada_horas': r['jornada_horas'] if r['jornada_horas'] is not None else ('En curso' if r.get('es_hoy') else ''),
             'incidencia': r.get('incidencia', ''),
         })
 
@@ -599,6 +599,7 @@ def detalle_empleado_api(request, pk):
             'jornada_fin': r['jornada_fin'],
             'jornada_horas': r['jornada_horas'],
             'incidencia': r.get('incidencia', ''),
+            'es_hoy': r.get('es_hoy', False),
         })
 
     total_horas = round(total_comida + total_jornada, 2)
